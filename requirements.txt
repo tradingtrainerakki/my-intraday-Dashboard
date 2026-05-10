@@ -1,4 +1,5 @@
 streamlit
 yfinance
-pandas-ta
 pandas
+pandas-ta==0.3.14b0
+requests
