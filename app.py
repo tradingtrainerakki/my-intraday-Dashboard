@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import yfinance as yf
-import pandas_ta as ta
 import requests
 
 st.set_page_config(page_title="F&O Pro Scanner", layout="wide")
@@ -10,7 +9,6 @@ NSE_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Accept": "*/*",
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
     "Referer": "https://www.nseindia.com/",
     "Connection": "keep-alive",
 }
@@ -23,6 +21,9 @@ FALLBACK_WATCHLIST = [
     "TATAMOTORS", "TATASTEEL", "JSWSTEEL", "HINDALCO", "COALINDIA",
     "BPCL", "IOC", "GAIL", "TECHM", "HCLTECH"
 ]
+
+def ema(series, period):
+    return series.ewm(span=period, adjust=False).mean()
 
 def get_nse_session():
     session = requests.Session()
@@ -44,8 +45,8 @@ def get_oi_gainers():
                 return [item['symbol'] for item in data[:30] if 'symbol' in item]
             elif isinstance(data, dict) and 'data' in data:
                 return [item['symbol'] for item in data['data'][:30] if 'symbol' in item]
-    except Exception as e:
-        st.warning(f"NSE API se data nahi mila — Fallback list use ho rahi hai")
+    except:
+        st.warning("NSE API se data nahi mila — Fallback list use ho rahi hai")
     return FALLBACK_WATCHLIST
 
 def calculate_levels(cp, signal):
@@ -58,28 +59,34 @@ def calculate_levels(cp, signal):
 def get_pro_data(ticker):
     try:
         df = yf.download(ticker + ".NS", period="2d", interval="5m", progress=False)
-        if len(df) < 20: return None
+        if len(df) < 20:
+            return None
         df.columns = [col[0] if isinstance(col, tuple) else col for col in df.columns]
         prev_close = df['Close'].shift(1).iloc[0]
         today_open = df['Open'].iloc[0]
         gap_pct = ((today_open - prev_close) / prev_close) * 100
-        if abs(gap_pct) > 2.0: return None
-        v, p = df['Volume'], (df['High'] + df['Low'] + df['Close']) / 3
+        if abs(gap_pct) > 2.0:
+            return None
+        v = df['Volume']
+        p = (df['High'] + df['Low'] + df['Close']) / 3
         df['VWAP'] = (p * v).cumsum() / v.cumsum()
-        df['EMA9'] = ta.ema(df['Close'], 9)
-        df['EMA21'] = ta.ema(df['Close'], 21)
+        df['EMA9'] = ema(df['Close'], 9)
+        df['EMA21'] = ema(df['Close'], 21)
         last = df.iloc[-1]
-        cp, vwap, ema9, ema21 = last['Close'], last['VWAP'], last['EMA9'], last['EMA21']
-        vol_ratio = round(last['Volume'] / df['Volume'].mean(), 1)
+        cp = float(last['Close'])
+        vwap = float(last['VWAP'])
+        ema9 = float(last['EMA9'])
+        ema21 = float(last['EMA21'])
+        vol_ratio = round(float(last['Volume']) / float(df['Volume'].mean()), 1)
         score = 20
         if cp > vwap: score += 30
         if ema9 > ema21: score += 30
         if vol_ratio > 1.2: score += 20
         signal = "🚀 STRONG BUY" if score >= 80 else "🔴 SELL" if score <= 30 else "🟡 WAIT"
-        sl, tgt = calculate_levels(float(cp), signal)
+        sl, tgt = calculate_levels(cp, signal)
         return {
             "STOCK": ticker,
-            "LTP": round(float(cp), 2),
+            "LTP": round(cp, 2),
             "GAP %": f"{round(float(gap_pct), 2)}%",
             "SIGNAL": signal,
             "VWAP": "ABOVE" if cp > vwap else "BELOW",
