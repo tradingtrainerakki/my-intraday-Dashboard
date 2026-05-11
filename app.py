@@ -16,7 +16,7 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.markdown("## 🔐 F&O Pro Scanner — Login")
-        password = st.text_input("Ca@1809:", type="password")
+        password = st.text_input("password", type="password")
         if st.button("Login"):
             if password == "Ca@1809":  # Apna password yahan likho
                 st.session_state.authenticated = True
