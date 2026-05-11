@@ -16,14 +16,17 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.markdown("## 🔐 F&O Pro Scanner — Login")
-        password = st.text_input("password", type="password")
+        username = st.text_input("👤 Username:")
+        password = st.text_input("🔑 Password:", type="password")
         if st.button("Login"):
-            if password == "Ca@1809":  # Apna password yahan likho
+            if username == "akki" and password == "Ca@1809":
                 st.session_state.authenticated = True
                 st.rerun()
             else:
-                st.error("❌ Wrong Password!")
+                st.error("❌ Wrong Username or Password!")
         st.stop()
+
+check_password()
 
 check_password()
 # ===== PASSWORD PROTECTION END =====
