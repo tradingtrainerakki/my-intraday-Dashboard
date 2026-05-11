@@ -9,7 +9,6 @@ from plotly.subplots import make_subplots
 
 st.set_page_config(page_title="F&O Pro Scanner", layout="wide")
 
-# ===== PASSWORD PROTECTION =====
 # Multiple users dictionary
 USERS = {
     "akki":   "Ca@1809",      # tera account
@@ -35,11 +34,6 @@ def check_password():
         st.stop()
 
 check_password()
-check_password()
-
-check_password()
-# ===== PASSWORD PROTECTION END =====
-
 st.markdown("""
 <style>
     .main { background-color: #0e1117; }
