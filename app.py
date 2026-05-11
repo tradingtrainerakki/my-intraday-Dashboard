@@ -296,10 +296,10 @@ with tab1:
             c3.metric("🔴 Sell", sell_count)
             c4.metric("🟡 Wait", wait_count)
 
-            styled = df_result.style\
+            styled = (df_result.style
                 .map(color_signal, subset=['SIGNAL'])
-                .applymap(color_strength, subset=['STRENGTH'])
-                .applymap(color_ema_trend, subset=['EMA TREND'])
+                .map(color_strength, subset=['STRENGTH'])
+                .map(color_ema_trend, subset=['EMA TREND']))
 
             st.dataframe(styled, use_container_width=True, height=500)
         else:
@@ -420,7 +420,7 @@ with tab3:
             if val == "OPEN": return 'color: #ffd200; font-weight: bold'
             return ''
 
-        styled_j = df_journal.style\
+        styled_j = (df_journal.style
             .map(color_pnl, subset=['pnl'])
             .map(color_status, subset=['status']))
 
