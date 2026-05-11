@@ -10,6 +10,14 @@ from plotly.subplots import make_subplots
 st.set_page_config(page_title="F&O Pro Scanner", layout="wide")
 
 # ===== PASSWORD PROTECTION =====
+# Multiple users dictionary
+USERS = {
+    "akki":   "Ca@1809",      # tera account
+    "user1":  "pass123",      # client 1
+    "user2":  "pass456",      # client 2
+    "user3":  "pass789",      # client 3
+}
+
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -19,13 +27,14 @@ def check_password():
         username = st.text_input("👤 Username:")
         password = st.text_input("🔑 Password:", type="password")
         if st.button("Login"):
-            if username == "akki" and password == "Ca@1809":
+            if username in USERS and USERS[username] == password:
                 st.session_state.authenticated = True
                 st.rerun()
             else:
                 st.error("❌ Wrong Username or Password!")
         st.stop()
 
+check_password()
 check_password()
 
 check_password()
