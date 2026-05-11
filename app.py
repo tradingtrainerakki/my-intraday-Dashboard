@@ -297,7 +297,7 @@ with tab1:
             c4.metric("🟡 Wait", wait_count)
 
             styled = df_result.style\
-                .applymap(color_signal, subset=['SIGNAL'])\
+                .map(color_signal, subset=['SIGNAL'])
                 .applymap(color_strength, subset=['STRENGTH'])\
                 .applymap(color_ema_trend, subset=['EMA TREND'])
 
