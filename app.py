@@ -298,7 +298,7 @@ with tab1:
 
             styled = df_result.style\
                 .map(color_signal, subset=['SIGNAL'])
-                .applymap(color_strength, subset=['STRENGTH'])\
+                .applymap(color_strength, subset=['STRENGTH'])
                 .applymap(color_ema_trend, subset=['EMA TREND'])
 
             st.dataframe(styled, use_container_width=True, height=500)
@@ -421,8 +421,8 @@ with tab3:
             return ''
 
         styled_j = df_journal.style\
-            .applymap(color_pnl, subset=['pnl'])\
-            .applymap(color_status, subset=['status'])
+            .map(color_pnl, subset=['pnl'])
+            .map(color_status, subset=['status']))
 
         st.dataframe(styled_j, use_container_width=True, height=400)
 
