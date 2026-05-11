@@ -9,6 +9,25 @@ from plotly.subplots import make_subplots
 
 st.set_page_config(page_title="F&O Pro Scanner", layout="wide")
 
+# ===== PASSWORD PROTECTION =====
+def check_password():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        st.markdown("## 🔐 F&O Pro Scanner — Login")
+        password = st.text_input("Ca@1809:", type="password")
+        if st.button("Login"):
+            if password == "Ca@1809":  # Apna password yahan likho
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("❌ Wrong Password!")
+        st.stop()
+
+check_password()
+# ===== PASSWORD PROTECTION END =====
+
 st.markdown("""
 <style>
     .main { background-color: #0e1117; }
