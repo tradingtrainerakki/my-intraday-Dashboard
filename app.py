@@ -365,8 +365,12 @@ def get_oi_gainers():
     return FALLBACK_WATCHLIST
 
 def calculate_levels(cp, signal):
-    if "BUY" in signal:
+    if "STRONG BUY" in signal:
+        return round(cp * 0.993, 2), round(cp * 1.015, 2)
+    elif "BUY" in signal:
         return round(cp * 0.995, 2), round(cp * 1.01, 2)
+    elif "STRONG SELL" in signal:
+        return round(cp * 1.007, 2), round(cp * 0.985, 2)
     elif "SELL" in signal:
         return round(cp * 1.005, 2), round(cp * 0.99, 2)
     return "-", "-"
@@ -419,10 +423,14 @@ def get_pro_data(ticker):
         if ema9 > ema21: score += 30
         if vol_ratio > 1.2: score += 20
 
-        if score >= 80:
+        if score >= 90:
             signal = "🚀 STRONG BUY"
-        elif score <= 30:
-            signal = "🔴 SELL"
+        elif score >= 70:
+            signal = "✅ BUY"
+        elif score <= 20:
+            signal = "🔴 STRONG SELL"
+        elif score <= 40:
+            signal = "🔻 SELL"
         else:
             signal = "🟡 WAIT"
 
@@ -520,18 +528,21 @@ def plot_candles(df, ticker, interval_label):
 # ============================================================
 def color_signal(val):
     v = str(val)
-    if "STRONG BUY" in v: return 'background:#00ff8820;color:#00ff88;font-weight:700;border-radius:4px;'
-    if "SELL"       in v: return 'background:#ff406020;color:#ff4060;font-weight:700;border-radius:4px;'
-    if "WAIT"       in v: return 'background:#ffc70020;color:#ffc700;font-weight:700;border-radius:4px;'
-    return ''
+    if "STRONG BUY"  in v: return "background:#00ff0030;color:#00ff00;font-weight:700;"
+    if "BUY"         in v: return "background:#00cc0020;color:#00cc00;font-weight:700;"
+    if "STRONG SELL" in v: return "background:#ff000030;color:#ff2020;font-weight:700;"
+    if "SELL"        in v: return "background:#cc000020;color:#ff4060;font-weight:700;"
+    if "WAIT"        in v: return "background:#ffc70020;color:#ffc700;font-weight:700;"
+    return ""
 
 def color_strength(val):
     try:
-        v = int(str(val).replace('%',''))
-        if v >= 80: return 'color:#00ff88;font-weight:700'
-        if v <= 40: return 'color:#ff4060'
-        return 'color:#ffc700'
-    except: return ''
+        v = int(str(val).replace("%",""))
+        if v >= 80: return "background:#00ff0025;color:#00ff00;font-weight:700;"
+        if v >= 60: return "background:#88ff0015;color:#88ff00;font-weight:700;"
+        if v >= 40: return "background:#ffc70020;color:#ffc700;font-weight:700;"
+        return "background:#ff406020;color:#ff4060;font-weight:700;"
+    except: return ""
 
 def color_ema(val):
     if "BULLISH" in str(val): return 'color:#00ff88;font-weight:700'
@@ -582,6 +593,53 @@ def save_journal(entries):
         json.dump(entries, f, indent=2)
 
 
+
+# ============================================================
+# THEME TOGGLE
+# ============================================================
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
+
+is_dark = st.session_state.theme == "dark"
+
+if is_dark:
+    bg      = "#080c12"
+    bg2     = "#0d1219"
+    border  = "#1e2d3d"
+    txt     = "#c8d8e8"
+    txt2    = "#6a8aaa"
+    accent  = "#00d4ff"
+    card_bg = "linear-gradient(135deg, #0d1a26, #091520)"
+else:
+    bg      = "#f4f7fb"
+    bg2     = "#ffffff"
+    border  = "#dde3ed"
+    txt     = "#1a2a3a"
+    txt2    = "#5a7a9a"
+    accent  = "#0066cc"
+    card_bg = "linear-gradient(135deg, #ffffff, #f0f4f8)"
+
+st.markdown(f"""
+<style>
+html, body, [class*="css"] {{
+    background-color: {bg} !important;
+    color: {txt} !important;
+}}
+.main {{ background-color: {bg} !important; }}
+[data-testid="metric-container"] {{
+    background: {bg2} !important;
+    border-color: {border} !important;
+}}
+[data-testid="stMetricValue"] {{ color: {accent} !important; }}
+[data-testid="stMetricLabel"] {{ color: {txt2} !important; }}
+.stTabs [data-baseweb="tab-list"] {{
+    background: {bg2} !important;
+    border-color: {border} !important;
+}}
+.stTabs [data-baseweb="tab"] {{ color: {txt2} !important; }}
+</style>
+""", unsafe_allow_html=True)
+
 # ============================================================
 # HEADER
 # ============================================================
@@ -614,6 +672,14 @@ st.markdown(f"""
 # ============================================================
 # TABS
 # ============================================================
+# Theme toggle
+th_col = st.columns([6, 1])[1]
+with th_col:
+    btn_label = "☀️ Light" if is_dark else "🌙 Dark"
+    if st.button(btn_label, use_container_width=True):
+        st.session_state.theme = "light" if is_dark else "dark"
+        st.rerun()
+
 tab1, tab2, tab3 = st.tabs(["  📡  LIVE SCANNER  ", "  📊  CHART VIEW  ", "  📓  TRADE JOURNAL  "])
 
 
