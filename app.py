@@ -3,7 +3,13 @@ import pandas as pd
 import yfinance as yf
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# IST = UTC + 5:30
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def now_ist():
+    return datetime.now(IST)
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -331,13 +337,13 @@ def ema(series, period):
     return series.ewm(span=period, adjust=False).mean()
 
 def is_market_open():
-    now = datetime.now()
+    now = now_ist()
     if now.weekday() >= 5:
         return False, "Weekend — Market Band Hai 🏖️"
     if now.hour < 9 or (now.hour == 9 and now.minute < 15):
-        return False, f"Market Opens at 9:15 AM"
+        return False, "Market Opens at 9:15 AM IST"
     if now.hour > 15 or (now.hour == 15 and now.minute > 30):
-        return False, "Market Closed (3:30 PM)"
+        return False, "Market Closed (3:30 PM IST)"
     return True, "Market Open ✅"
 
 def get_nse_session():
@@ -644,7 +650,7 @@ html, body, [class*="css"] {{
 # HEADER
 # ============================================================
 open_status, market_msg = is_market_open()
-now_str = datetime.now().strftime("%d %b %Y · %H:%M:%S")
+now_str = now_ist().strftime("%d %b %Y · %H:%M:%S IST")
 
 st.markdown(f"""
 <div class="top-header">
@@ -728,7 +734,7 @@ with tab1:
             c2.metric("🚀 Strong Buy",    buy_c)
             c3.metric("🔴 Sell",          sell_c)
             c4.metric("🟡 Wait",          wait_c)
-            c5.metric("⏰ Scanned At",    datetime.now().strftime("%H:%M:%S"))
+            c5.metric("⏰ Scanned At",    now_ist().strftime("%H:%M:%S IST"))
 
             st.markdown('<div class="section-header">📈 Scan Results</div>', unsafe_allow_html=True)
 
@@ -784,7 +790,7 @@ with tab1:
             st.download_button(
                 label="📥 CSV Download Karo",
                 data=csv,
-                file_name=f"scan_{datetime.now().strftime('%d%m%Y_%H%M')}.csv",
+                file_name=f"scan_{now_ist().strftime('%d%m%Y_%H%M')}.csv",
                 mime='text/csv',
             )
         else:
