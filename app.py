@@ -20,9 +20,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ============================================================
-# USERS
-# ============================================================
 USERS = {
     "akki":  "Ca@1809",
     "user1": "pass123",
@@ -30,14 +27,9 @@ USERS = {
     "user3": "pass789",
 }
 
-# ============================================================
-# GLOBAL CSS — Dark Premium Theme
-# ============================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
-
-/* ── Base ── */
 html, body, [class*="css"] {
     font-family: 'JetBrains Mono', monospace !important;
     background-color: #080c12 !important;
@@ -45,11 +37,7 @@ html, body, [class*="css"] {
 }
 .main { background-color: #080c12 !important; }
 section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
-
-/* ── Hide Streamlit branding ── */
 #MainMenu, footer, header { visibility: hidden; }
-
-/* ── Top Header Bar ── */
 .top-header {
     background: linear-gradient(135deg, #0d1a26, #091520);
     border-bottom: 1px solid #1e2d3d;
@@ -73,19 +61,12 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
     text-transform: uppercase;
     margin-top: -4px;
 }
-
-/* ── Metric Cards ── */
 [data-testid="metric-container"] {
     background: linear-gradient(135deg, #0d1a26, #111820) !important;
     border: 1px solid #1e2d3d !important;
     border-radius: 10px !important;
     padding: 16px !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-}
-[data-testid="metric-container"]:hover {
-    border-color: #00d4ff55 !important;
-    transform: translateY(-2px);
-    transition: all 0.2s;
 }
 [data-testid="stMetricLabel"] {
     font-size: 10px !important;
@@ -98,8 +79,6 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
     font-weight: 700 !important;
     color: #00d4ff !important;
 }
-
-/* ── Buttons ── */
 .stButton > button {
     background: linear-gradient(90deg, #00d4ff22, #00ff8822) !important;
     color: #00d4ff !important;
@@ -116,11 +95,7 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
     background: linear-gradient(90deg, #00d4ff, #00ff88) !important;
     color: #000 !important;
     border-color: transparent !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 20px rgba(0,212,255,0.3) !important;
 }
-
-/* ── Tabs ── */
 .stTabs [data-baseweb="tab-list"] {
     background: #0d1219 !important;
     border-bottom: 1px solid #1e2d3d !important;
@@ -143,8 +118,6 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
     color: #00d4ff !important;
     border-bottom: 2px solid #00d4ff !important;
 }
-
-/* ── Inputs ── */
 .stTextInput > div > div > input,
 .stNumberInput > div > div > input,
 .stTextArea > div > div > textarea,
@@ -156,81 +129,10 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 12px !important;
 }
-.stTextInput > div > div > input:focus,
-.stNumberInput > div > div > input:focus {
-    border-color: #00d4ff !important;
-    box-shadow: 0 0 0 1px #00d4ff44 !important;
-}
-
-/* ── Dataframe ── */
-.stDataFrame {
-    border: 1px solid #1e2d3d !important;
-    border-radius: 10px !important;
-    overflow: hidden !important;
-}
-[data-testid="stDataFrameResizable"] {
-    background: #0d1219 !important;
-}
-
-/* ── Progress bar ── */
-.stProgress > div > div > div {
-    background: linear-gradient(90deg, #00d4ff, #00ff88) !important;
-    border-radius: 4px !important;
-}
-
-/* ── Spinner ── */
+.stDataFrame { border: 1px solid #1e2d3d !important; border-radius: 10px !important; overflow: hidden !important; }
+.stProgress > div > div > div { background: linear-gradient(90deg, #00d4ff, #00ff88) !important; border-radius: 4px !important; }
 .stSpinner > div { border-top-color: #00d4ff !important; }
-
-/* ── Alerts ── */
-.stSuccess {
-    background: #00ff8815 !important;
-    border: 1px solid #00ff8840 !important;
-    border-radius: 8px !important;
-    color: #00ff88 !important;
-}
-.stWarning {
-    background: #ffc70015 !important;
-    border: 1px solid #ffc70040 !important;
-    border-radius: 8px !important;
-}
-.stError {
-    background: #ff406015 !important;
-    border: 1px solid #ff406040 !important;
-    border-radius: 8px !important;
-}
-.stInfo {
-    background: #00d4ff15 !important;
-    border: 1px solid #00d4ff40 !important;
-    border-radius: 8px !important;
-}
-
-/* ── Divider ── */
 hr { border-color: #1e2d3d !important; }
-
-/* ── Expander ── */
-.streamlit-expanderHeader {
-    background: #0d1219 !important;
-    border: 1px solid #1e2d3d !important;
-    border-radius: 8px !important;
-    color: #c8d8e8 !important;
-    font-size: 12px !important;
-}
-
-/* ── Stat badge ── */
-.stat-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-.badge-buy   { background:#00ff8820; border:1px solid #00ff8840; color:#00ff88; }
-.badge-sell  { background:#ff406020; border:1px solid #ff406040; color:#ff4060; }
-.badge-wait  { background:#ffc70020; border:1px solid #ffc70040; color:#ffc700; }
-.badge-open  { background:#00d4ff20; border:1px solid #00d4ff40; color:#00d4ff; }
-
-/* ── Section header ── */
 .section-header {
     font-family: 'Syne', sans-serif !important;
     font-size: 1.1rem;
@@ -242,8 +144,6 @@ hr { border-color: #1e2d3d !important; }
     padding-left: 10px;
     margin: 16px 0 12px 0;
 }
-
-/* ── Login box ── */
 .login-container {
     max-width: 400px;
     margin: 80px auto;
@@ -253,27 +153,6 @@ hr { border-color: #1e2d3d !important; }
     padding: 40px;
     text-align: center;
 }
-.login-title {
-    font-family: 'Syne', sans-serif !important;
-    font-size: 1.5rem;
-    font-weight: 800;
-    background: linear-gradient(90deg, #00d4ff, #00ff88);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 8px;
-}
-
-/* ── Journal card ── */
-.journal-card {
-    background: linear-gradient(135deg, #0d1a26, #111820);
-    border: 1px solid #1e2d3d;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 8px;
-}
-.journal-card:hover { border-color: #00d4ff44; }
-
-/* ── Selectbox label ── */
 label {
     color: #6a8aaa !important;
     font-size: 11px !important;
@@ -284,21 +163,20 @@ label {
 """, unsafe_allow_html=True)
 
 
-# ============================================================
-# LOGIN
-# ============================================================
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
-
     if not st.session_state.authenticated:
         st.markdown("""
         <div class="login-container">
-            <div class="login-title">📈 F&O PRO SCANNER</div>
-            <div style="color:#3a5a7a; font-size:10px; letter-spacing:3px; margin-bottom:24px;">NSE · INTRADAY · LIVE</div>
+            <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;
+                        background:linear-gradient(90deg,#00d4ff,#00ff88);
+                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+                📈 F&O PRO SCANNER
+            </div>
+            <div style="color:#3a5a7a;font-size:10px;letter-spacing:3px;margin-bottom:24px;">NSE · INTRADAY · LIVE</div>
         </div>
         """, unsafe_allow_html=True)
-
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.markdown('<div style="background:#0d1219;border:1px solid #1e2d3d;border-radius:12px;padding:28px;">', unsafe_allow_html=True)
@@ -317,9 +195,6 @@ def check_password():
 check_password()
 
 
-# ============================================================
-# HELPERS
-# ============================================================
 NSE_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36",
     "Accept": "*/*", "Accept-Language": "en-US,en;q=0.9",
@@ -355,20 +230,46 @@ def get_nse_session():
         pass
     return session
 
+# ── UPDATED: OI % bhi return karo ──
 def get_oi_gainers():
+    """
+    Returns list of dicts: [{symbol, oi_change_pct, prev_oi, latest_oi}, ...]
+    Sorted by OI % change descending (sabse zyada OI spurt pehle)
+    """
     try:
         session = get_nse_session()
         url = "https://www.nseindia.com/api/live-analysis-oi-spurts-underlyings"
         response = session.get(url, timeout=10)
         if response.status_code == 200:
             data = response.json()
-            if isinstance(data, list):
-                return [item['symbol'] for item in data[:30] if 'symbol' in item]
-            elif isinstance(data, dict) and 'data' in data:
-                return [item['symbol'] for item in data['data'][:30] if 'symbol' in item]
+            items = []
+            raw = data if isinstance(data, list) else data.get('data', [])
+            for item in raw[:30]:
+                sym = item.get('symbol', '')
+                if not sym:
+                    continue
+                # NSE field names (can vary slightly)
+                pchg = item.get('pchangeinOpenInterest',
+                        item.get('pChange', 0)) or 0
+                prev_oi   = item.get('prevOI', item.get('previousOI', 0)) or 0
+                latest_oi = item.get('latestOI', item.get('openInterest', 0)) or 0
+                chg_oi    = item.get('changeinOpenInterest',
+                             item.get('changeInOpenInterest', 0)) or 0
+                items.append({
+                    'symbol':        sym,
+                    'oi_chg_pct':    round(float(pchg), 2),
+                    'prev_oi':       int(prev_oi),
+                    'latest_oi':     int(latest_oi),
+                    'chg_oi':        int(chg_oi),
+                })
+            # Sort by OI % change descending — sabse bada spurt pehle
+            items.sort(key=lambda x: x['oi_chg_pct'], reverse=True)
+            return items[:20]   # top 20 OI spurts
     except:
         pass
-    return FALLBACK_WATCHLIST
+    # Fallback — no OI data
+    return [{'symbol': s, 'oi_chg_pct': 0, 'prev_oi': 0, 'latest_oi': 0, 'chg_oi': 0}
+            for s in FALLBACK_WATCHLIST[:20]]
 
 def calculate_levels(cp, signal):
     if "STRONG BUY" in signal:
@@ -381,7 +282,8 @@ def calculate_levels(cp, signal):
         return round(cp * 1.005, 2), round(cp * 0.99, 2)
     return "-", "-"
 
-def get_pro_data(ticker):
+# ── UPDATED: oi_info dict accept karta hai ──
+def get_pro_data(ticker, oi_info):
     try:
         df = yf.download(ticker + ".NS", period="5d", interval="5m", progress=False)
         if len(df) < 20:
@@ -425,42 +327,52 @@ def get_pro_data(ticker):
         )
 
         score = 20
-        if cp > vwap:   score += 30
+        if cp > vwap:    score += 30
         if ema9 > ema21: score += 30
         if vol_ratio > 1.2: score += 20
 
-        if score >= 90:
-            signal = "🚀 STRONG BUY"
-        elif score >= 70:
-            signal = "✅ BUY"
-        elif score <= 20:
-            signal = "🔴 STRONG SELL"
-        elif score <= 40:
-            signal = "🔻 SELL"
-        else:
-            signal = "🟡 WAIT"
+        if score >= 90:   signal = "🚀 STRONG BUY"
+        elif score >= 70: signal = "✅ BUY"
+        elif score <= 20: signal = "🔴 STRONG SELL"
+        elif score <= 40: signal = "🔻 SELL"
+        else:             signal = "🟡 WAIT"
 
         sl, tgt = calculate_levels(cp, signal)
 
+        # OI % — green arrow agar positive
+        oi_pct = oi_info.get('oi_chg_pct', 0)
+        oi_str = f"{'🟢' if oi_pct >= 0 else '🔴'} {oi_pct:+.2f}%"
+
+        # OI Interpretation — OI % + Price % combine karke direction
+        oi_up   = oi_pct > 0
+        price_up = chg > 0
+        if oi_up and price_up:
+            oi_interp = "🐂 LONG BUILD"
+        elif oi_up and not price_up:
+            oi_interp = "🐻 SHORT BUILD"
+        elif not oi_up and price_up:
+            oi_interp = "📤 SHORT COVER"
+        else:
+            oi_interp = "📉 LONG UNWIND"
+
         return {
-            "STOCK":     ticker,
-            "LTP":       round(cp, 2),
-            "CHG %":     f"{'+' if chg >= 0 else ''}{chg}%",
-            "SIGNAL":    signal,
-            "VWAP":      "⬆ ABOVE" if cp > vwap else "⬇ BELOW",
-            "EMA TREND": "📈 BULLISH" if ema9 > ema21 else "📉 BEARISH",
-            "VOL RATIO": f"{vol_ratio}x",
-            "STRENGTH":  f"{score}%",
-            "STOP LOSS": sl,
-            "TARGET":    tgt,
+            "STOCK":          ticker,
+            "OI SPURT %":     oi_str,
+            "OI SIGNAL":      oi_interp,
+            "LTP":            round(cp, 2),
+            "CHG %":          f"{'+' if chg >= 0 else ''}{chg}%",
+            "SIGNAL":         signal,
+            "VWAP":           "⬆ ABOVE" if cp > vwap else "⬇ BELOW",
+            "EMA TREND":      "📈 BULLISH" if ema9 > ema21 else "📉 BEARISH",
+            "VOL RATIO":      f"{vol_ratio}x",
+            "STRENGTH":       f"{score}%",
+            "STOP LOSS":      sl,
+            "TARGET":         tgt,
         }
     except:
         return None
 
 
-# ============================================================
-# CHART
-# ============================================================
 def get_candle_data(ticker, interval, period):
     try:
         df = yf.download(ticker + ".NS", period=period, interval=interval, progress=False)
@@ -481,46 +393,29 @@ def get_candle_data(ticker, interval, period):
 def plot_candles(df, ticker, interval_label):
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
                         vertical_spacing=0.02, row_heights=[0.75, 0.25])
-
     fig.add_trace(go.Candlestick(
-        x=df.index,
-        open=df['Open'], high=df['High'],
-        low=df['Low'], close=df['Close'],
-        name="Price",
-        increasing_line_color='#00ff88',
-        decreasing_line_color='#ff4060',
-        increasing_fillcolor='#00ff8855',
-        decreasing_fillcolor='#ff406055',
+        x=df.index, open=df['Open'], high=df['High'],
+        low=df['Low'], close=df['Close'], name="Price",
+        increasing_line_color='#00ff88', decreasing_line_color='#ff4060',
+        increasing_fillcolor='#00ff8855', decreasing_fillcolor='#ff406055',
     ), row=1, col=1)
-
     fig.add_trace(go.Scatter(x=df.index, y=df['EMA9'],
         line=dict(color='#ffc700', width=1.5), name='EMA 9'), row=1, col=1)
     fig.add_trace(go.Scatter(x=df.index, y=df['EMA21'],
         line=dict(color='#ff6b6b', width=1.5), name='EMA 21'), row=1, col=1)
     fig.add_trace(go.Scatter(x=df.index, y=df['VWAP'],
         line=dict(color='#00d4ff', width=1.5, dash='dot'), name='VWAP'), row=1, col=1)
-
     colors = ['#00ff88' if float(df['Close'].iloc[i]) >= float(df['Open'].iloc[i])
               else '#ff4060' for i in range(len(df))]
-    fig.add_trace(go.Bar(
-        x=df.index, y=df['Volume'],
-        marker_color=colors, name='Volume', opacity=0.6
-    ), row=2, col=1)
-
+    fig.add_trace(go.Bar(x=df.index, y=df['Volume'],
+        marker_color=colors, name='Volume', opacity=0.6), row=2, col=1)
     fig.update_layout(
-        title=dict(
-            text=f"<b>{ticker}</b> — {interval_label}",
-            font=dict(size=16, color='#c8d8e8')
-        ),
-        template="plotly_dark",
-        paper_bgcolor='#080c12',
-        plot_bgcolor='#0d1219',
-        xaxis_rangeslider_visible=False,
-        height=580,
-        legend=dict(
-            orientation="h", yanchor="bottom", y=1.02,
-            font=dict(size=11), bgcolor='rgba(0,0,0,0)'
-        ),
+        title=dict(text=f"<b>{ticker}</b> — {interval_label}",
+                   font=dict(size=16, color='#c8d8e8')),
+        template="plotly_dark", paper_bgcolor='#080c12', plot_bgcolor='#0d1219',
+        xaxis_rangeslider_visible=False, height=580,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                    font=dict(size=11), bgcolor='rgba(0,0,0,0)'),
         margin=dict(l=10, r=10, t=60, b=10),
         font=dict(family='JetBrains Mono')
     )
@@ -529,9 +424,6 @@ def plot_candles(df, ticker, interval_label):
     return fig
 
 
-# ============================================================
-# STYLE FUNCTIONS
-# ============================================================
 def color_signal(val):
     v = str(val)
     if "STRONG BUY"  in v: return "background:#00ff0030;color:#00ff00;font-weight:700;"
@@ -568,6 +460,22 @@ def color_chg(val):
     except: pass
     return ''
 
+def color_oi(val):
+    """OI % ke liye green/red color"""
+    v = str(val)
+    if '🟢' in v: return 'color:#00ff88;font-weight:700;font-size:13px;'
+    if '🔴' in v: return 'color:#ff4060;font-weight:700;font-size:13px;'
+    return ''
+
+def color_oi_interp(val):
+    """OI Interpretation column color"""
+    v = str(val)
+    if 'LONG BUILD'   in v: return 'background:#00ff8820;color:#00ff88;font-weight:700;'
+    if 'SHORT BUILD'  in v: return 'background:#ff406020;color:#ff4060;font-weight:700;'
+    if 'SHORT COVER'  in v: return 'background:#ffc70020;color:#ffc700;font-weight:700;'
+    if 'LONG UNWIND'  in v: return 'background:#ff820020;color:#ff8200;font-weight:700;'
+    return ''
+
 def color_pnl(val):
     try:
         if float(val) > 0: return 'color:#00ff88;font-weight:700'
@@ -582,9 +490,6 @@ def color_status(val):
     return ''
 
 
-# ============================================================
-# JOURNAL
-# ============================================================
 JOURNAL_FILE = "journal.json"
 
 def load_journal():
@@ -599,56 +504,11 @@ def save_journal(entries):
         json.dump(entries, f, indent=2)
 
 
-
-# ============================================================
-# THEME TOGGLE
-# ============================================================
 if "theme" not in st.session_state:
     st.session_state.theme = "dark"
 
 is_dark = st.session_state.theme == "dark"
 
-if is_dark:
-    bg      = "#080c12"
-    bg2     = "#0d1219"
-    border  = "#1e2d3d"
-    txt     = "#c8d8e8"
-    txt2    = "#6a8aaa"
-    accent  = "#00d4ff"
-    card_bg = "linear-gradient(135deg, #0d1a26, #091520)"
-else:
-    bg      = "#f4f7fb"
-    bg2     = "#ffffff"
-    border  = "#dde3ed"
-    txt     = "#1a2a3a"
-    txt2    = "#5a7a9a"
-    accent  = "#0066cc"
-    card_bg = "linear-gradient(135deg, #ffffff, #f0f4f8)"
-
-st.markdown(f"""
-<style>
-html, body, [class*="css"] {{
-    background-color: {bg} !important;
-    color: {txt} !important;
-}}
-.main {{ background-color: {bg} !important; }}
-[data-testid="metric-container"] {{
-    background: {bg2} !important;
-    border-color: {border} !important;
-}}
-[data-testid="stMetricValue"] {{ color: {accent} !important; }}
-[data-testid="stMetricLabel"] {{ color: {txt2} !important; }}
-.stTabs [data-baseweb="tab-list"] {{
-    background: {bg2} !important;
-    border-color: {border} !important;
-}}
-.stTabs [data-baseweb="tab"] {{ color: {txt2} !important; }}
-</style>
-""", unsafe_allow_html=True)
-
-# ============================================================
-# HEADER
-# ============================================================
 open_status, market_msg = is_market_open()
 now_str = now_ist().strftime("%d %b %Y · %H:%M:%S IST")
 
@@ -657,7 +517,7 @@ st.markdown(f"""
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
     <div>
       <div class="logo-text">📈 F&O PRO SCANNER</div>
-      <div class="logo-sub">NSE · Intraday · Live OI + EMA + VWAP</div>
+      <div class="logo-sub">NSE · Intraday · Live OI Spurts + EMA + VWAP</div>
     </div>
     <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
       <div style="background:{'#00ff8820' if open_status else '#ff406020'};
@@ -674,15 +534,9 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-
-# ============================================================
-# TABS
-# ============================================================
-# Theme toggle
 th_col = st.columns([6, 1])[1]
 with th_col:
-    btn_label = "☀️ Light" if is_dark else "🌙 Dark"
-    if st.button(btn_label, use_container_width=True):
+    if st.button("☀️ Light" if is_dark else "🌙 Dark", use_container_width=True):
         st.session_state.theme = "light" if is_dark else "dark"
         st.rerun()
 
@@ -700,22 +554,49 @@ with tab1:
     with col_btn:
         scan_btn = st.button("🔍  SCAN MARKET", use_container_width=True)
 
-    if scan_btn:
-        with st.spinner("NSE se OI Gainers fetch ho rahe hain..."):
-            watchlist = get_oi_gainers()
+    with col_info:
+        st.markdown("""
+        <div style="color:#6a8aaa;font-size:11px;padding:10px 0;letter-spacing:0.5px;">
+        📊 Top 20 stocks sorted by <b style="color:#00d4ff">OI Spurt %</b> at 9:20 AM
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.markdown(f'<div class="section-header">📋 {len(watchlist)} Stocks Scan Ho Rahe Hain</div>', unsafe_allow_html=True)
+    if scan_btn:
+        with st.spinner("NSE se Top 20 OI Spurts fetch ho rahe hain..."):
+            oi_list = get_oi_gainers()   # [{symbol, oi_chg_pct, ...}, ...]
+
+        st.markdown(f'<div class="section-header">📋 Top {len(oi_list)} OI Spurt Stocks Scan Ho Rahe Hain</div>', unsafe_allow_html=True)
+
+        # OI spurt table dikhao pehle
+        oi_preview = pd.DataFrame([{
+            'RANK': i+1,
+            'SYMBOL': x['symbol'],
+            'OI SPURT %': f"🟢 +{x['oi_chg_pct']:.2f}%" if x['oi_chg_pct'] >= 0 else f"🔴 {x['oi_chg_pct']:.2f}%",
+            'PREV OI': f"{x['prev_oi']:,}",
+            'LATEST OI': f"{x['latest_oi']:,}",
+            'CHG OI': f"{x['chg_oi']:+,}",
+        } for i, x in enumerate(oi_list)])
+
+        with st.expander("📊 NSE OI Spurt Raw Data (Top 20)", expanded=True):
+            st.dataframe(oi_preview, use_container_width=True, hide_index=True)
 
         results  = []
         progress = st.progress(0)
         status   = st.empty()
 
-        for i, ticker in enumerate(watchlist):
-            status.markdown(f'<div style="color:#6a8aaa;font-size:11px;letter-spacing:1px;">⏳ SCANNING: <span style="color:#00d4ff;font-weight:700;">{ticker}</span> ({i+1}/{len(watchlist)})</div>', unsafe_allow_html=True)
-            data = get_pro_data(ticker)
+        for i, oi_item in enumerate(oi_list):
+            ticker = oi_item['symbol']
+            status.markdown(
+                f'<div style="color:#6a8aaa;font-size:11px;letter-spacing:1px;">'
+                f'⏳ SCANNING: <span style="color:#00d4ff;font-weight:700;">{ticker}</span> '
+                f'| OI Spurt: <span style="color:#00ff88;font-weight:700;">+{oi_item["oi_chg_pct"]:.2f}%</span> '
+                f'({i+1}/{len(oi_list)})</div>',
+                unsafe_allow_html=True
+            )
+            data = get_pro_data(ticker, oi_item)
             if data:
                 results.append(data)
-            progress.progress((i + 1) / len(watchlist))
+            progress.progress((i + 1) / len(oi_list))
 
         status.empty()
         progress.empty()
@@ -723,22 +604,21 @@ with tab1:
         if results:
             df_result = pd.DataFrame(results)
             st.session_state['scan_results'] = results
+            st.session_state['oi_list']       = oi_list
 
             buy_c  = len(df_result[df_result['SIGNAL'].str.contains('BUY')])
             sell_c = len(df_result[df_result['SIGNAL'].str.contains('SELL')])
             wait_c = len(df_result[df_result['SIGNAL'].str.contains('WAIT')])
 
-            # Stat cards
             c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric("📊 Total Found",   len(df_result))
-            c2.metric("🚀 Strong Buy",    buy_c)
-            c3.metric("🔴 Sell",          sell_c)
-            c4.metric("🟡 Wait",          wait_c)
-            c5.metric("⏰ Scanned At",    now_ist().strftime("%H:%M:%S IST"))
+            c1.metric("📊 Total Found", len(df_result))
+            c2.metric("🚀 Strong Buy",  buy_c)
+            c3.metric("🔴 Sell",        sell_c)
+            c4.metric("🟡 Wait",        wait_c)
+            c5.metric("⏰ Scanned At",  now_ist().strftime("%H:%M:%S IST"))
 
-            st.markdown('<div class="section-header">📈 Scan Results</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-header">📈 Scan Results — OI Spurt ke hisaab se sorted</div>', unsafe_allow_html=True)
 
-            # Filter buttons
             f1, f2, f3, f4 = st.columns(4)
             show_filter = f1.selectbox("Filter by Signal", ["All", "Strong Buy", "Sell", "Wait"], label_visibility="collapsed")
 
@@ -752,11 +632,13 @@ with tab1:
 
             styled = (
                 df_show.style
-                .map(color_signal,   subset=['SIGNAL'])
-                .map(color_strength, subset=['STRENGTH'])
-                .map(color_ema,      subset=['EMA TREND'])
-                .map(color_vwap,     subset=['VWAP'])
-                .map(color_chg,      subset=['CHG %'])
+                .map(color_oi,        subset=['OI SPURT %'])
+                .map(color_oi_interp, subset=['OI SIGNAL'])
+                .map(color_signal,    subset=['SIGNAL'])
+                .map(color_strength,  subset=['STRENGTH'])
+                .map(color_ema,       subset=['EMA TREND'])
+                .map(color_vwap,      subset=['VWAP'])
+                .map(color_chg,       subset=['CHG %'])
                 .set_properties(**{
                     'background-color': '#0d1219',
                     'color':            '#c8d8e8',
@@ -785,12 +667,11 @@ with tab1:
 
             st.dataframe(styled, use_container_width=True, height=520)
 
-            # Download button
             csv = df_result.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="📥 CSV Download Karo",
                 data=csv,
-                file_name=f"scan_{now_ist().strftime('%d%m%Y_%H%M')}.csv",
+                file_name=f"oi_scan_{now_ist().strftime('%d%m%Y_%H%M')}.csv",
                 mime='text/csv',
             )
         else:
@@ -801,10 +682,12 @@ with tab1:
         df_result = pd.DataFrame(st.session_state['scan_results'])
         styled = (
             df_result.style
-            .map(color_signal,   subset=['SIGNAL'])
-            .map(color_strength, subset=['STRENGTH'])
-            .map(color_ema,      subset=['EMA TREND'])
-            .map(color_vwap,     subset=['VWAP'])
+            .map(color_oi,        subset=['OI SPURT %'])
+            .map(color_oi_interp, subset=['OI SIGNAL'])
+            .map(color_signal,    subset=['SIGNAL'])
+            .map(color_strength,  subset=['STRENGTH'])
+            .map(color_ema,       subset=['EMA TREND'])
+            .map(color_vwap,      subset=['VWAP'])
         )
         st.dataframe(styled, use_container_width=True, height=520)
 
@@ -824,46 +707,31 @@ with tab2:
         st.markdown("<br>", unsafe_allow_html=True)
         load_btn = st.button("📈  Load Chart", use_container_width=True)
 
-    interval_map = {
-        "5 Min":  ("5m",  "5d"),
-        "15 Min": ("15m", "5d"),
-        "1 Hour": ("1h",  "30d"),
-    }
+    interval_map = {"5 Min": ("5m", "5d"), "15 Min": ("15m", "5d"), "1 Hour": ("1h", "30d")}
 
     if load_btn:
         interval, period = interval_map[timeframe]
         with st.spinner(f"Loading {chart_ticker} {timeframe} chart..."):
             df_chart = get_candle_data(chart_ticker, interval, period)
-
         if df_chart is not None and len(df_chart) > 5:
             fig = plot_candles(df_chart, chart_ticker, timeframe)
             st.plotly_chart(fig, use_container_width=True)
-
             last = df_chart.iloc[-1]
             prev = df_chart.iloc[-2]
             chg_val = round(float(last['Close']) - float(prev['Close']), 2)
-
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("💰 LTP",   round(float(last['Close']), 2), delta=chg_val)
-            m2.metric("〰 VWAP",  round(float(last['VWAP']), 2))
+            m1.metric("💰 LTP",    round(float(last['Close']), 2), delta=chg_val)
+            m2.metric("〰 VWAP",   round(float(last['VWAP']), 2))
             m3.metric("📊 EMA 9",  round(float(last['EMA9']), 2))
             m4.metric("📊 EMA 21", round(float(last['EMA21']), 2))
-
-            # Signal summary
-            cp    = float(last['Close'])
-            vwap  = float(last['VWAP'])
-            e9    = float(last['EMA9'])
-            e21   = float(last['EMA21'])
-            above_vwap = cp > vwap
-            bull_ema   = e9 > e21
-
-            if above_vwap and bull_ema:
+            cp = float(last['Close']); vwap = float(last['VWAP'])
+            e9 = float(last['EMA9']);  e21  = float(last['EMA21'])
+            if cp > vwap and e9 > e21:
                 sig_color = "#00ff88"; sig_text = "🚀 BULLISH SETUP — Entry ke liye tayar"
-            elif not above_vwap and not bull_ema:
+            elif not (cp > vwap) and not (e9 > e21):
                 sig_color = "#ff4060"; sig_text = "🔴 BEARISH SETUP — Short side dekho"
             else:
                 sig_color = "#ffc700"; sig_text = "🟡 MIXED SIGNALS — Wait karo"
-
             st.markdown(f"""
             <div style="background:{sig_color}15;border:1px solid {sig_color}40;
                         border-radius:8px;padding:12px 20px;margin-top:8px;
@@ -886,16 +754,13 @@ with tab3:
         j_date  = j1.date_input("📅 Date", datetime.now())
         j_stock = j2.text_input("📌 Stock", placeholder="e.g. RELIANCE")
         j_type  = j3.selectbox("📊 Trade Type", ["BUY", "SELL"])
-
         j4, j5, j6 = st.columns(3)
         j_entry  = j4.number_input("💰 Entry Price", min_value=0.0, format="%.2f")
         j_sl     = j5.number_input("🛑 Stop Loss",   min_value=0.0, format="%.2f")
         j_target = j6.number_input("🎯 Target",      min_value=0.0, format="%.2f")
-
         j7, j8 = st.columns(2)
         j_qty    = j7.number_input("📦 Quantity", min_value=1, value=1)
         j_status = j8.selectbox("🔖 Status", ["OPEN", "HIT TARGET", "HIT SL", "EXITED"])
-
         j_notes = st.text_area("📝 Notes / Reason", placeholder="Trade lene ka reason kya tha? ICT setup, OI data, etc.")
 
         if st.button("💾  Entry Save Karo", use_container_width=True):
@@ -908,7 +773,6 @@ with tab3:
                     else:
                         exit_price = j_sl if j_status == "HIT TARGET" else j_target if j_status == "HIT SL" else j_entry
                     pnl = round((exit_price - j_entry) * j_qty if j_type == "BUY" else (j_entry - exit_price) * j_qty, 2)
-
                 entries.append({
                     "date": str(j_date), "stock": j_stock.upper(),
                     "type": j_type, "entry": j_entry, "sl": j_sl,
@@ -921,52 +785,33 @@ with tab3:
                 st.error("❌ Stock ka naam daalo!")
 
     st.markdown("---")
-
     entries = load_journal()
     if entries:
         df_journal = pd.DataFrame(entries)
-
         total_pnl = df_journal['pnl'].sum()
         wins      = len(df_journal[df_journal['pnl'] > 0])
         losses    = len(df_journal[df_journal['pnl'] < 0])
         open_t    = len(df_journal[df_journal['status'] == 'OPEN'])
         win_rate  = round((wins / max(wins + losses, 1)) * 100, 1)
-
         p1, p2, p3, p4, p5 = st.columns(5)
-        p1.metric("💰 Total P&L",    f"₹{round(total_pnl, 2)}", delta=f"₹{round(total_pnl,2)}")
-        p2.metric("✅ Winning",       wins)
-        p3.metric("❌ Losing",        losses)
-        p4.metric("🎯 Win Rate",      f"{win_rate}%")
-        p5.metric("🔓 Open Trades",   open_t)
-
+        p1.metric("💰 Total P&L",  f"₹{round(total_pnl,2)}", delta=f"₹{round(total_pnl,2)}")
+        p2.metric("✅ Winning",    wins)
+        p3.metric("❌ Losing",     losses)
+        p4.metric("🎯 Win Rate",   f"{win_rate}%")
+        p5.metric("🔓 Open Trades", open_t)
         styled_j = (
             df_journal.style
             .map(color_pnl,    subset=['pnl'])
             .map(color_status, subset=['status'])
-            .set_properties(**{
-                'background-color': '#0d1219',
-                'color':            '#c8d8e8',
-                'border-color':     '#1e2d3d',
-                'font-size':        '12px',
-            })
+            .set_properties(**{'background-color':'#0d1219','color':'#c8d8e8','border-color':'#1e2d3d','font-size':'12px'})
             .set_table_styles([
-                {'selector': 'thead th', 'props': [
-                    ('background-color', '#111820'),
-                    ('color', '#6a8aaa'),
-                    ('font-size', '10px'),
-                    ('letter-spacing', '2px'),
-                    ('text-transform', 'uppercase'),
-                    ('border-bottom', '2px solid #1e2d3d'),
-                    ('padding', '10px 12px'),
-                ]},
-                {'selector': 'tbody td', 'props': [
-                    ('padding', '10px 12px'),
-                    ('border-bottom', '1px solid #1e2d3d'),
-                ]},
+                {'selector':'thead th','props':[('background-color','#111820'),('color','#6a8aaa'),
+                 ('font-size','10px'),('letter-spacing','2px'),('text-transform','uppercase'),
+                 ('border-bottom','2px solid #1e2d3d'),('padding','10px 12px')]},
+                {'selector':'tbody td','props':[('padding','10px 12px'),('border-bottom','1px solid #1e2d3d')]},
             ])
         )
         st.dataframe(styled_j, use_container_width=True, height=420)
-
         c1, c2 = st.columns([1, 4])
         with c1:
             if st.button("🗑️  Journal Clear Karo"):
