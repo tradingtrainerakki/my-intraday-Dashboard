@@ -257,7 +257,7 @@ def get_oi_gainers():
                              item.get('changeInOpenInterest', 0)) or 0
                 items.append({
                     'symbol':        sym,
-                    'oi_chg_pct':    round(float(pchg), 2),
+                    'oi_chg_pct':    round((float(latest_oi) - float(prev_oi)) / float(prev_oi) * 100, 2) if float(prev_oi) > 0 else round(float(pchg), 2),
                     'prev_oi':       int(prev_oi),
                     'latest_oi':     int(latest_oi),
                     'chg_oi':        int(chg_oi),
