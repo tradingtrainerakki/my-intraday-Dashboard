@@ -230,7 +230,6 @@ def get_nse_session():
         pass
     return session
 
-# ── UPDATED: OI % bhi return karo ──
 def get_oi_gainers():
     """
     Returns list of dicts: [{symbol, oi_change_pct, prev_oi, latest_oi}, ...]
@@ -248,26 +247,22 @@ def get_oi_gainers():
                 sym = item.get('symbol', '')
                 if not sym:
                     continue
-                # NSE field names (can vary slightly)
-                pchg = item.get('pchangeinOpenInterest',
-                        item.get('pChange', 0)) or 0
+                pchg      = item.get('pchangeinOpenInterest', item.get('pChange', 0)) or 0
                 prev_oi   = item.get('prevOI', item.get('previousOI', 0)) or 0
                 latest_oi = item.get('latestOI', item.get('openInterest', 0)) or 0
-                chg_oi    = item.get('changeinOpenInterest',
-                             item.get('changeInOpenInterest', 0)) or 0
+                chg_oi    = item.get('changeinOpenInterest', item.get('changeInOpenInterest', 0)) or 0
                 items.append({
-                    'symbol':        sym,
-                    'oi_chg_pct':    round((float(latest_oi) - float(prev_oi)) / float(prev_oi) * 100, 2) if float(prev_oi) > 0 else round(float(pchg), 2),
-                    'prev_oi':       int(prev_oi),
-                    'latest_oi':     int(latest_oi),
-                    'chg_oi':        int(chg_oi),
+                    'symbol':     sym,
+                    'oi_chg_pct': round((float(latest_oi) - float(prev_oi)) / float(prev_oi) * 100, 2)
+                                  if float(prev_oi) > 0 else round(float(pchg), 2),
+                    'prev_oi':    int(prev_oi),
+                    'latest_oi':  int(latest_oi),
+                    'chg_oi':     int(chg_oi),
                 })
-            # Sort by OI % change descending — sabse bada spurt pehle
             items.sort(key=lambda x: x['oi_chg_pct'], reverse=True)
-            return items[:20]   # top 20 OI spurts
+            return items[:20]
     except:
         pass
-    # Fallback — no OI data
     return [{'symbol': s, 'oi_chg_pct': 0, 'prev_oi': 0, 'latest_oi': 0, 'chg_oi': 0}
             for s in FALLBACK_WATCHLIST[:20]]
 
@@ -282,7 +277,6 @@ def calculate_levels(cp, signal):
         return round(cp * 1.005, 2), round(cp * 0.99, 2)
     return "-", "-"
 
-# ── UPDATED: oi_info dict accept karta hai ──
 def get_pro_data(ticker, oi_info):
     try:
         df = yf.download(ticker + ".NS", period="5d", interval="5m", progress=False)
@@ -308,11 +302,19 @@ def get_pro_data(ticker, oi_info):
 
         prev_close = float(prev_data['Close'].iloc[-1])
         today_open = float(today_data['Open'].iloc[0])
-        gap_pct    = round(((today_open - prev_close) / prev_close) * 100, 2)
 
+        # ── FIX 1: Opening Gap Filter (prev close vs today open) ──
+        gap_pct = round(((today_open - prev_close) / prev_close) * 100, 2)
         if abs(gap_pct) > 2.0:
             return None
 
+        # ── FIX 2: First 5-min Candle Filter (9:15-9:20 candle close vs prev close) ──
+        first_candle_close = float(today_data['Close'].iloc[0])
+        first_candle_move  = abs(first_candle_close - prev_close) / prev_close * 100
+        if first_candle_move > 2.0:
+            return None
+
+        # VWAP calculation
         v    = today_data['Volume']
         p    = (today_data['High'] + today_data['Low'] + today_data['Close']) / 3
         vwap = float((p * v).cumsum().iloc[-1] / v.cumsum().iloc[-1])
@@ -322,13 +324,14 @@ def get_pro_data(ticker, oi_info):
         cp    = float(today_data['Close'].iloc[-1])
         chg   = round(((cp - prev_close) / prev_close) * 100, 2)
 
-        vol_ratio = round(
-            float(today_data['Volume'].iloc[-1]) / float(today_data['Volume'].mean()), 1
-        )
+        # ── FIX 3: Vol Ratio — prev day average se compare (current candle / prev day avg) ──
+        prev_avg_vol = float(prev_data['Volume'].mean())
+        curr_vol     = float(today_data['Volume'].iloc[-1])
+        vol_ratio    = round(curr_vol / prev_avg_vol, 1) if prev_avg_vol > 0 else 0.0
 
         score = 20
-        if cp > vwap:    score += 30
-        if ema9 > ema21: score += 30
+        if cp > vwap:       score += 30
+        if ema9 > ema21:    score += 30
         if vol_ratio > 1.2: score += 20
 
         if score >= 90:   signal = "🚀 STRONG BUY"
@@ -339,12 +342,10 @@ def get_pro_data(ticker, oi_info):
 
         sl, tgt = calculate_levels(cp, signal)
 
-        # OI % — green arrow agar positive
         oi_pct = oi_info.get('oi_chg_pct', 0)
         oi_str = f"{'🟢' if oi_pct >= 0 else '🔴'} {oi_pct:+.2f}%"
 
-        # OI Interpretation — OI % + Price % combine karke direction
-        oi_up   = oi_pct > 0
+        oi_up    = oi_pct > 0
         price_up = chg > 0
         if oi_up and price_up:
             oi_interp = "🐂 LONG BUILD"
@@ -356,18 +357,18 @@ def get_pro_data(ticker, oi_info):
             oi_interp = "📉 LONG UNWIND"
 
         return {
-            "STOCK":          ticker,
-            "OI SPURT %":     oi_str,
-            "OI SIGNAL":      oi_interp,
-            "LTP":            round(cp, 2),
-            "CHG %":          f"{'+' if chg >= 0 else ''}{chg}%",
-            "SIGNAL":         signal,
-            "VWAP":           "⬆ ABOVE" if cp > vwap else "⬇ BELOW",
-            "EMA TREND":      "📈 BULLISH" if ema9 > ema21 else "📉 BEARISH",
-            "VOL RATIO":      f"{vol_ratio}x",
-            "STRENGTH":       f"{score}%",
-            "STOP LOSS":      sl,
-            "TARGET":         tgt,
+            "STOCK":      ticker,
+            "OI SPURT %": oi_str,
+            "OI SIGNAL":  oi_interp,
+            "LTP":        round(cp, 2),
+            "CHG %":      f"{'+' if chg >= 0 else ''}{chg}%",
+            "SIGNAL":     signal,
+            "VWAP":       "⬆ ABOVE" if cp > vwap else "⬇ BELOW",
+            "EMA TREND":  "📈 BULLISH" if ema9 > ema21 else "📉 BEARISH",
+            "VOL RATIO":  f"{vol_ratio}x",
+            "STRENGTH":   f"{score}%",
+            "STOP LOSS":  sl,
+            "TARGET":     tgt,
         }
     except:
         return None
@@ -461,19 +462,17 @@ def color_chg(val):
     return ''
 
 def color_oi(val):
-    """OI % ke liye green/red color"""
     v = str(val)
     if '🟢' in v: return 'color:#00ff88;font-weight:700;font-size:13px;'
     if '🔴' in v: return 'color:#ff4060;font-weight:700;font-size:13px;'
     return ''
 
 def color_oi_interp(val):
-    """OI Interpretation column color"""
     v = str(val)
-    if 'LONG BUILD'   in v: return 'background:#00ff8820;color:#00ff88;font-weight:700;'
-    if 'SHORT BUILD'  in v: return 'background:#ff406020;color:#ff4060;font-weight:700;'
-    if 'SHORT COVER'  in v: return 'background:#ffc70020;color:#ffc700;font-weight:700;'
-    if 'LONG UNWIND'  in v: return 'background:#ff820020;color:#ff8200;font-weight:700;'
+    if 'LONG BUILD'  in v: return 'background:#00ff8820;color:#00ff88;font-weight:700;'
+    if 'SHORT BUILD' in v: return 'background:#ff406020;color:#ff4060;font-weight:700;'
+    if 'SHORT COVER' in v: return 'background:#ffc70020;color:#ffc700;font-weight:700;'
+    if 'LONG UNWIND' in v: return 'background:#ff820020;color:#ff8200;font-weight:700;'
     return ''
 
 def color_pnl(val):
@@ -557,32 +556,33 @@ with tab1:
     with col_info:
         st.markdown("""
         <div style="color:#6a8aaa;font-size:11px;padding:10px 0;letter-spacing:0.5px;">
-        📊 Top 20 stocks sorted by <b style="color:#00d4ff">OI Spurt %</b> at 9:20 AM
+        📊 Top 20 stocks sorted by <b style="color:#00d4ff">OI Spurt %</b> at 9:20 AM &nbsp;|&nbsp;
+        <span style="color:#ffc700;">⚡ Gap Filter ON: Opening gap &amp; First 5-min candle move &gt; 2% wale stocks exclude honge</span>
         </div>
         """, unsafe_allow_html=True)
 
     if scan_btn:
         with st.spinner("NSE se Top 20 OI Spurts fetch ho rahe hain..."):
-            oi_list = get_oi_gainers()   # [{symbol, oi_chg_pct, ...}, ...]
+            oi_list = get_oi_gainers()
 
         st.markdown(f'<div class="section-header">📋 Top {len(oi_list)} OI Spurt Stocks Scan Ho Rahe Hain</div>', unsafe_allow_html=True)
 
-        # OI spurt table dikhao pehle
         oi_preview = pd.DataFrame([{
-            'RANK': i+1,
-            'SYMBOL': x['symbol'],
+            'RANK':       i+1,
+            'SYMBOL':     x['symbol'],
             'OI SPURT %': f"🟢 +{x['oi_chg_pct']:.2f}%" if x['oi_chg_pct'] >= 0 else f"🔴 {x['oi_chg_pct']:.2f}%",
-            'PREV OI': f"{x['prev_oi']:,}",
-            'LATEST OI': f"{x['latest_oi']:,}",
-            'CHG OI': f"{x['chg_oi']:+,}",
+            'PREV OI':    f"{x['prev_oi']:,}",
+            'LATEST OI':  f"{x['latest_oi']:,}",
+            'CHG OI':     f"{x['chg_oi']:+,}",
         } for i, x in enumerate(oi_list)])
 
         with st.expander("📊 NSE OI Spurt Raw Data (Top 20)", expanded=True):
             st.dataframe(oi_preview, use_container_width=True, hide_index=True)
 
-        results  = []
-        progress = st.progress(0)
-        status   = st.empty()
+        results   = []
+        skipped   = []
+        progress  = st.progress(0)
+        status    = st.empty()
 
         for i, oi_item in enumerate(oi_list):
             ticker = oi_item['symbol']
@@ -596,15 +596,27 @@ with tab1:
             data = get_pro_data(ticker, oi_item)
             if data:
                 results.append(data)
+            else:
+                skipped.append(ticker)
             progress.progress((i + 1) / len(oi_list))
 
         status.empty()
         progress.empty()
 
+        # Skipped stocks dikhao (gap filter ki wajah se)
+        if skipped:
+            st.markdown(
+                f'<div style="background:#ffc70015;border:1px solid #ffc70040;border-radius:8px;'
+                f'padding:10px 16px;color:#ffc700;font-size:11px;margin-bottom:12px;">'
+                f'⚡ <b>Gap Filter:</b> {len(skipped)} stocks exclude kiye gaye (opening gap ya first 5-min candle &gt; 2%): '
+                f'<span style="color:#c8d8e8;">{", ".join(skipped)}</span></div>',
+                unsafe_allow_html=True
+            )
+
         if results:
             df_result = pd.DataFrame(results)
             st.session_state['scan_results'] = results
-            st.session_state['oi_list']       = oi_list
+            st.session_state['oi_list']      = oi_list
 
             buy_c  = len(df_result[df_result['SIGNAL'].str.contains('BUY')])
             sell_c = len(df_result[df_result['SIGNAL'].str.contains('SELL')])
@@ -794,10 +806,10 @@ with tab3:
         open_t    = len(df_journal[df_journal['status'] == 'OPEN'])
         win_rate  = round((wins / max(wins + losses, 1)) * 100, 1)
         p1, p2, p3, p4, p5 = st.columns(5)
-        p1.metric("💰 Total P&L",  f"₹{round(total_pnl,2)}", delta=f"₹{round(total_pnl,2)}")
-        p2.metric("✅ Winning",    wins)
-        p3.metric("❌ Losing",     losses)
-        p4.metric("🎯 Win Rate",   f"{win_rate}%")
+        p1.metric("💰 Total P&L",   f"₹{round(total_pnl,2)}", delta=f"₹{round(total_pnl,2)}")
+        p2.metric("✅ Winning",     wins)
+        p3.metric("❌ Losing",      losses)
+        p4.metric("🎯 Win Rate",    f"{win_rate}%")
         p5.metric("🔓 Open Trades", open_t)
         styled_j = (
             df_journal.style
