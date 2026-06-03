@@ -305,13 +305,13 @@ def get_pro_data(ticker, oi_info):
 
         # ── FIX 1: Opening Gap Filter (prev close vs today open) ──
         gap_pct = round(((today_open - prev_close) / prev_close) * 100, 2)
-        if abs(gap_pct) > 2.0:
+        if abs(gap_pct) >= 2.0:
             return None
 
         # ── FIX 2: First 5-min Candle Filter (9:15-9:20 candle close vs prev close) ──
         first_candle_close = float(today_data['Close'].iloc[0])
         first_candle_move  = abs(first_candle_close - prev_close) / prev_close * 100
-        if first_candle_move > 2.0:
+        if first_candle_move >= 2.0:
             return None
 
         # VWAP calculation
