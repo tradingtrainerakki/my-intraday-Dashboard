@@ -333,15 +333,15 @@ def get_pro_data(ticker, oi_info):
         curr_vol     = float(today_data['Volume'].iloc[-1])
         vol_ratio    = round(curr_vol / prev_avg_vol, 1) if prev_avg_vol > 0 else 0.0
 
-        score = 20
-        if cp > vwap:       score += 30
-        if ema9 > ema21:    score += 30
-        if vol_ratio > 1.2: score += 20
+        score = 0                        # base 0 karo
+        if cp > vwap:       score += 34
+        if ema9 > ema21:    score += 33
+        if vol_ratio > 1.2: score += 33
 
-        if score >= 90:   signal = "🚀 STRONG BUY"
-        elif score >= 70: signal = "✅ BUY"
-        elif score <= 20: signal = "🔴 STRONG SELL"
-        elif score <= 40: signal = "🔻 SELL"
+        if score >= 100:  signal = "🚀 STRONG BUY"   # teeno conditions
+        elif score >= 60: signal = "✅ BUY"           # 2 conditions
+        elif score == 0:  signal = "🔴 STRONG SELL"  # koi nahi
+        elif score <= 40: signal = "🔻 SELL"         # 1 condition
         else:             signal = "🟡 WAIT"
 
         sl, tgt = calculate_levels(cp, signal)
