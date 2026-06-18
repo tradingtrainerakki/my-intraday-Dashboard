@@ -323,11 +323,7 @@ def get_pro_data(ticker, oi_info):
         ema21 = float(ema(df['Close'], 21).iloc[-1])
         cp    = float(today_data['Close'].iloc[-1])
         chg   = round(((cp - prev_close) / prev_close) * 100, 2)
-        
-        # NEW: Price Filter — 2000 se upar skip
-        if cp > 2000:
-            return None
-            
+
         # ── FIX 3: Vol Ratio — prev day average se compare (current candle / prev day avg) ──
         prev_avg_vol = float(prev_data['Volume'].mean())
         curr_vol     = float(today_data['Volume'].iloc[-1])
