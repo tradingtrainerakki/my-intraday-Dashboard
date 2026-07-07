@@ -325,6 +325,152 @@ def get_oi_gainers():
     return [{'symbol': s, 'oi_chg_pct': 0, 'prev_oi': 0, 'latest_oi': 0, 'chg_oi': 0}
             for s in FALLBACK_WATCHLIST[:20]]
 
+
+# ============================================================
+# DHAN API SE OI DATA (OPTIONAL). Agar client_id + access_token
+# dono diye hain aur sab steps successfully chal jaate hain, to
+# Dhan se OI aayega. Kahin bhi fail ho jaye (mapping na mile,
+# network issue, kuch bhi) to function None return karta hai aur
+# caller automatically NSE scrape (get_oi_gainers) pe fall back
+# karta hai. Kuch bhi tootega nahi.
+# ============================================================
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def fetch_dhan_scrip_master():
+    """
+    Dhan ki daily-updated scrip master CSV se sirf NSE Futures (FUTSTK)
+    rows nikalta hai — poori file bahut badi hai (saare strikes/expiries
+    sab exchanges ke), isliye load karte hi filter karke chhota rakhte hain.
+    Cache 24hr ke liye — roz ek baar hi download hoga.
+    """
+    try:
+        url = "https://images.dhan.co/api-data/api-scrip-master.csv"
+        chunks = []
+        for chunk in pd.read_csv(url, chunksize=50000, low_memory=False):
+            filtered = chunk[
+                (chunk['SEM_EXM_EXCH_ID'] == 'NSE') &
+                (chunk['SEM_INSTRUMENT_NAME'] == 'FUTSTK')
+            ]
+            if len(filtered) > 0:
+                chunks.append(filtered[['SEM_SMST_SECURITY_ID', 'SEM_CUSTOM_SYMBOL',
+                                         'SEM_TRADING_SYMBOL', 'SEM_EXPIRY_DATE']].copy())
+        if not chunks:
+            return None
+        df = pd.concat(chunks, ignore_index=True)
+        df['SEM_EXPIRY_DATE'] = pd.to_datetime(df['SEM_EXPIRY_DATE'], errors='coerce')
+        return df
+    except Exception:
+        return None
+
+
+def get_current_fut_security_id(symbol, scrip_df):
+    """
+    Diye gaye stock symbol ka current-month (nearest, abhi expire na hua)
+    futures contract ka Security ID dhoondta hai scrip master se.
+    """
+    try:
+        today = pd.Timestamp(now_ist().date())
+        rows = scrip_df[
+            scrip_df['SEM_TRADING_SYMBOL'].str.startswith(symbol + "-", na=False) &
+            (scrip_df['SEM_EXPIRY_DATE'] >= today)
+        ]
+        if rows.empty:
+            return None
+        nearest = rows.sort_values('SEM_EXPIRY_DATE').iloc[0]
+        return str(int(nearest['SEM_SMST_SECURITY_ID']))
+    except Exception:
+        return None
+
+
+def fetch_dhan_oi_gainers(access_token, client_id, watchlist):
+    """
+    Dhan API se OI Spurt list banata hai (NSE scrape ke jaisa shape).
+    Kahin bhi kuch missing/fail ho — None return karega, caller NSE
+    scrape pe chala jayega.
+    """
+    try:
+        if not access_token or not client_id:
+            return None
+
+        scrip_df = fetch_dhan_scrip_master()
+        if scrip_df is None or scrip_df.empty:
+            return None
+
+        headers = {
+            "Content-Type": "application/json",
+            "access-token": access_token,
+            "client-id": client_id,
+        }
+
+        # Step 1: har stock ka futures Security ID nikaalo
+        sym_to_id = {}
+        for sym in watchlist:
+            sid = get_current_fut_security_id(sym, scrip_df)
+            if sid:
+                sym_to_id[sym] = sid
+        if not sym_to_id:
+            return None
+
+        id_to_sym = {v: k for k, v in sym_to_id.items()}
+        all_ids = [int(v) for v in sym_to_id.values()]
+
+        # Step 2: aaj ka LIVE OI — Quote API (ek hi call mein sab)
+        quote_resp = requests.post(
+            "https://api.dhan.co/v2/marketfeed/quote",
+            json={"NSE_FNO": all_ids},
+            headers=headers, timeout=10
+        )
+        if quote_resp.status_code != 200:
+            return None
+        quote_data = quote_resp.json().get('data', {}).get('NSE_FNO', {})
+        if not quote_data:
+            return None
+
+        # Step 3: pichle din ka OI — Historical Daily API (per stock)
+        items = []
+        from_date = (now_ist() - timedelta(days=7)).strftime('%Y-%m-%d')
+        to_date   = now_ist().strftime('%Y-%m-%d')
+        for sid_str, quote_info in quote_data.items():
+            sym = id_to_sym.get(sid_str)
+            if not sym:
+                continue
+            latest_oi = quote_info.get('oi', 0) or 0
+            try:
+                hist_resp = requests.post(
+                    "https://api.dhan.co/v2/charts/historical",
+                    json={
+                        "securityId": sid_str, "exchangeSegment": "NSE_FNO",
+                        "instrument": "FUTSTK", "expiryCode": 0, "oi": True,
+                        "fromDate": from_date, "toDate": to_date
+                    },
+                    headers={"Content-Type": "application/json", "access-token": access_token},
+                    timeout=10
+                )
+                oi_series = hist_resp.json().get('open_interest', []) if hist_resp.status_code == 200 else []
+                prev_oi = oi_series[-1] if oi_series else 0
+            except Exception:
+                prev_oi = 0
+
+            if prev_oi > 0:
+                oi_chg_pct = round((float(latest_oi) - float(prev_oi)) / float(prev_oi) * 100, 2)
+            else:
+                oi_chg_pct = 0.0
+
+            items.append({
+                'symbol':     sym,
+                'oi_chg_pct': oi_chg_pct,
+                'prev_oi':    int(prev_oi),
+                'latest_oi':  int(latest_oi),
+                'chg_oi':     int(latest_oi - prev_oi),
+            })
+
+        if not items:
+            return None
+        items.sort(key=lambda x: x['oi_chg_pct'], reverse=True)
+        return items[:20]
+    except Exception:
+        return None
+
 def calculate_levels(cp, signal):
     if "STRONG BUY" in signal:
         return round(cp * 0.993, 2), round(cp * 1.015, 2)
@@ -613,6 +759,8 @@ with th_col:
 # ─────────────────────────────────────────
 if 'dhan_token' not in st.session_state:
     st.session_state.dhan_token = ''
+if 'dhan_client_id' not in st.session_state:
+    st.session_state.dhan_client_id = ''
 
 with st.expander("⚡ Dhan API — Real-Time Data (Optional)", expanded=False):
     dcol1, dcol2 = st.columns([3, 1])
@@ -630,6 +778,14 @@ with st.expander("⚡ Dhan API — Real-Time Data (Optional)", expanded=False):
             st.success("✅ Token set")
         else:
             st.caption("Blank = Yahoo Finance (default, delayed data) chalega jaisa pehle chal raha tha")
+
+    pasted_client_id = st.text_input(
+        "Dhan Client ID",
+        value=st.session_state.dhan_client_id,
+        placeholder="Dhan Client ID daalo (My Profile page pe milta hai — OI data ke liye zaruri hai)",
+    )
+    st.session_state.dhan_client_id = pasted_client_id
+    st.caption("💡 OI Spurt data bhi Dhan se lene ke liye — access token + client ID dono zaruri hain. Nahi diya to NSE se chalega (jaisa abhi chal raha hai).")
 
 tab1, tab2, tab3 = st.tabs(["  📡  LIVE SCANNER  ", "  📊  CHART VIEW  ", "  📓  TRADE JOURNAL  "])
 
@@ -654,10 +810,24 @@ with tab1:
         """, unsafe_allow_html=True)
 
     if scan_btn:
-        with st.spinner("NSE se Top 20 OI Spurts fetch ho rahe hain..."):
-            oi_list = get_oi_gainers()
+        dhan_token     = st.session_state.get('dhan_token', '')
+        dhan_client_id = st.session_state.get('dhan_client_id', '')
+        oi_source = "NSE"
+        oi_list = None
 
-        st.markdown(f'<div class="section-header">📋 Top {len(oi_list)} OI Spurt Stocks Scan Ho Rahe Hain</div>', unsafe_allow_html=True)
+        if dhan_token and dhan_client_id:
+            with st.spinner("Dhan API se OI data fetch ho raha hai..."):
+                oi_list = fetch_dhan_oi_gainers(dhan_token, dhan_client_id, FALLBACK_WATCHLIST)
+            if oi_list:
+                oi_source = "Dhan"
+
+        if not oi_list:
+            with st.spinner("NSE se Top 20 OI Spurts fetch ho rahe hain..."):
+                oi_list = get_oi_gainers()
+            oi_source = "NSE"
+
+        source_badge = "🟣 Dhan API" if oi_source == "Dhan" else "🟡 NSE (scraped)"
+        st.markdown(f'<div class="section-header">📋 Top {len(oi_list)} OI Spurt Stocks Scan Ho Rahe Hain — Source: {source_badge}</div>', unsafe_allow_html=True)
 
         oi_preview = pd.DataFrame([{
             'RANK':       i+1,
