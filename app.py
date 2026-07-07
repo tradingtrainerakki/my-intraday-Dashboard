@@ -3,9 +3,6 @@ import pandas as pd
 import yfinance as yf
 import requests
 import json
-import json
-from dual_scan_confirmation import save_scan_snapshot, show_confirmation_table
-from datetime import datetime, timezone, timedelta
 from datetime import datetime, timezone, timedelta
 
 # IST = UTC + 5:30
@@ -214,65 +211,6 @@ FALLBACK_WATCHLIST = [
 def ema(series, period):
     return series.ewm(span=period, adjust=False).mean()
 
-# ============================================================
-# DHAN API (OPTIONAL — real-time data). Agar token nahi diya
-# ya fetch fail ho jaye, sab kuch pehle jaisa Yahoo Finance
-# (yf.download) pe hi chalega. Kuch bhi tootega nahi.
-# ============================================================
-DHAN_SECURITY_IDS = {
-    "RELIANCE": "2885", "TCS": "11536", "HDFCBANK": "1333", "ICICIBANK": "4963",
-    "INFY": "1594", "HINDUNILVR": "1394", "ITC": "1660", "SBIN": "3045",
-    "BHARTIARTL": "10604", "KOTAKBANK": "1922", "LT": "11483", "AXISBANK": "5900",
-    "ASIANPAINT": "236", "MARUTI": "10999", "TITAN": "3506", "SUNPHARMA": "3351",
-    "BAJFINANCE": "317", "WIPRO": "3787", "ULTRACEMCO": "11532", "NESTLEIND": "17963",
-    "POWERGRID": "14977", "NTPC": "11630", "TATASTEEL": "3499", "M&M": "2031",
-    "HCLTECH": "1851", "TECHM": "13538", "INDUSINDBK": "5258", "GRASIM": "1232",
-    "ADANIENT": "25", "CIPLA": "694", "SBILIFE": "21808", "BAJAJFINSV": "16675",
-    "BRITANNIA": "1406", "APOLLOHOSP": "157", "ONGC": "2475", "EICHERMOT": "910",
-    "TATAMOTORS": "3456", "DIVISLAB": "10568", "HDFCLIFE": "467", "COALINDIA": "20374",
-    "JSWSTEEL": "11723", "HEROMOTOCO": "1348", "BPCL": "526", "DRREDDY": "881",
-    "ADANIPORTS": "15083", "HINDALCO": "1363", "UPL": "11287", "SHREECEM": "3103",
-    "BAJAJ-AUTO": "16669", "TATACONSUM": "3432",
-}
-
-def fetch_dhan_5m_df(ticker, access_token):
-    """
-    Try to fetch 5m intraday data from Dhan for `ticker`.
-    Returns a DataFrame shaped exactly like yf.download() output
-    (DatetimeIndex, columns: Open/High/Low/Close/Volume) on success,
-    or None on any failure — caller must fall back to yfinance.
-    """
-    try:
-        security_id = DHAN_SECURITY_IDS.get(ticker)
-        if not security_id or not access_token:
-            return None
-        from_date = (now_ist() - timedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')
-        to_date   = now_ist().strftime('%Y-%m-%d %H:%M:%S')
-        resp = requests.post(
-            "https://api.dhan.co/v2/charts/intraday",
-            json={
-                "securityId": security_id, "exchangeSegment": "NSE_EQ",
-                "instrument": "EQUITY", "interval": "5",
-                "fromDate": from_date, "toDate": to_date
-            },
-            headers={"Content-Type": "application/json", "access-token": access_token},
-            timeout=10
-        )
-        if resp.status_code != 200:
-            return None
-        data = resp.json()
-        if not data or 'open' not in data:
-            return None
-        df = pd.DataFrame({
-            'Open': data['open'], 'High': data['high'], 'Low': data['low'],
-            'Close': data['close'], 'Volume': data['volume'],
-        })
-        idx = pd.to_datetime(data['timestamp'], unit='s').tz_localize('UTC').tz_convert('Asia/Kolkata')
-        df.index = idx
-        return df if len(df) >= 20 else None
-    except Exception:
-        return None
-
 def is_market_open():
     now = now_ist()
     if now.weekday() >= 5:
@@ -341,12 +279,7 @@ def calculate_levels(cp, signal):
 
 def get_pro_data(ticker, oi_info):
     try:
-        dhan_token = st.session_state.get('dhan_token', '')
-        df = None
-        if dhan_token:
-            df = fetch_dhan_5m_df(ticker, dhan_token)
-        if df is None:
-            df = yf.download(ticker + ".NS", period="5d", interval="5m", progress=False)
+        df = yf.download(ticker + ".NS", period="5d", interval="5m", progress=False)
         if len(df) < 20:
             return None
         if isinstance(df.columns, pd.MultiIndex):
@@ -605,29 +538,6 @@ with th_col:
     if st.button("☀️ Light" if is_dark else "🌙 Dark", use_container_width=True):
         st.session_state.theme = "light" if is_dark else "dark"
         st.rerun()
-
-# ─────────────────────────────────────────
-# DHAN API TOKEN BOX (optional — screen pe hi paste karo)
-# ─────────────────────────────────────────
-if 'dhan_token' not in st.session_state:
-    st.session_state.dhan_token = ''
-
-with st.expander("⚡ Dhan API — Real-Time Data (Optional)", expanded=False):
-    dcol1, dcol2 = st.columns([3, 1])
-    with dcol1:
-        pasted_token = st.text_input(
-            "Dhan Access Token",
-            value=st.session_state.dhan_token,
-            type="password",
-            placeholder="Yahan Dhan access token paste karo (roz naya generate karna, 24hr mein expire hota hai)",
-            label_visibility="collapsed",
-        )
-        st.session_state.dhan_token = pasted_token
-    with dcol2:
-        if st.session_state.dhan_token:
-            st.success("✅ Token set")
-        else:
-            st.caption("Blank = Yahoo Finance (default, delayed data) chalega jaisa pehle chal raha tha")
 
 tab1, tab2, tab3 = st.tabs(["  📡  LIVE SCANNER  ", "  📊  CHART VIEW  ", "  📓  TRADE JOURNAL  "])
 
