@@ -325,9 +325,13 @@ def get_oi_gainers(min_absolute_oi=MIN_ABSOLUTE_OI_DEFAULT):
                 pchg      = item.get('pchangeinOpenInterest', item.get('pChange', 0)) or 0
                 prev_oi   = item.get('prevOI', item.get('previousOI', 0)) or 0
                 latest_oi = item.get('latestOI', item.get('openInterest', 0)) or 0
-                chg_oi    = item.get('changeinOpenInterest', item.get('changeInOpenInterest', 0)) or 0
 
                 prev_oi_f, latest_oi_f = float(prev_oi), float(latest_oi)
+
+                # NSE ka raw changeinOpenInterest field market-closed hours mein
+                # 0 aata hai (sirf live session mein populate hota hai) — isliye
+                # ye khud calculate karo, taaki after-hours bhi sahi dikhe
+                chg_oi = latest_oi_f - prev_oi_f
 
                 # divide-by-zero se safe: prev_oi > 0 tabhi real % nikalo,
                 # warna NSE ka pre-computed pchg field use karo (estimated)
