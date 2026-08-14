@@ -38,6 +38,20 @@ html, body, [class*="css"] {
 .main { background-color: #080c12 !important; }
 section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
 #MainMenu, footer, header { visibility: hidden; }
+/* Header hide karne se sidebar ka expand/collapse arrow (>>) bhi chhup
+   jaata hai kyunki wo header toolbar ke andar hota hai — isliye use
+   explicitly wapas visible aur clickable karo */
+[data-testid="collapsedControl"] {
+    visibility: visible !important;
+    display: block !important;
+    position: fixed !important;
+    top: 10px !important;
+    left: 10px !important;
+    z-index: 999999 !important;
+}
+[data-testid="collapsedControl"] svg {
+    fill: #00d4ff !important;
+}
 .top-header {
     background: linear-gradient(135deg, #0d1a26, #091520);
     border-bottom: 1px solid #1e2d3d;
