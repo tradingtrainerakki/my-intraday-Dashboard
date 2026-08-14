@@ -289,10 +289,26 @@ def get_nse_session():
         pass
     return session
 
-def get_oi_gainers():
+
+# ── OI liquidity filter defaults ─────────────────────────
+# Absolute OI (latest_oi) neeche is threshold ke, tab uss stock ko
+# "low liquidity" maana jaata hai — chahe uska % change kitna bhi bada dikhe.
+MIN_ABSOLUTE_OI_DEFAULT = 500
+
+def get_oi_gainers(min_absolute_oi=MIN_ABSOLUTE_OI_DEFAULT):
     """
-    Returns list of dicts: [{symbol, oi_change_pct, prev_oi, latest_oi}, ...]
+    Returns list of dicts: [{symbol, oi_chg_pct, prev_oi, latest_oi, chg_oi,
+                              oi_data_quality, low_liquidity}, ...]
     Sorted by OI % change descending (sabse zyada OI spurt pehle)
+
+    oi_data_quality:
+      'exact'     -> prev_oi > 0 mila, isliye (latest-prev)/prev se real % nikala
+      'estimated' -> prev_oi 0/missing tha (NSE data gap), isliye NSE ka pchg
+                     field fallback ke roop me use hua — ye kam reliable hai
+    low_liquidity:
+      True agar latest_oi (ya prev_oi) min_absolute_oi threshold se kam hai —
+      yaani absolute contracts hi bahut chhote hain, % chahe bada dikhe,
+      ismein bada size lena risky hai.
     """
     try:
         session = get_nse_session()
@@ -310,19 +326,33 @@ def get_oi_gainers():
                 prev_oi   = item.get('prevOI', item.get('previousOI', 0)) or 0
                 latest_oi = item.get('latestOI', item.get('openInterest', 0)) or 0
                 chg_oi    = item.get('changeinOpenInterest', item.get('changeInOpenInterest', 0)) or 0
+
+                prev_oi_f, latest_oi_f = float(prev_oi), float(latest_oi)
+
+                # divide-by-zero se safe: prev_oi > 0 tabhi real % nikalo,
+                # warna NSE ka pre-computed pchg field use karo (estimated)
+                if prev_oi_f > 0:
+                    oi_chg_pct = round((latest_oi_f - prev_oi_f) / prev_oi_f * 100, 2)
+                    data_quality = 'exact'
+                else:
+                    oi_chg_pct = round(float(pchg), 2)
+                    data_quality = 'estimated'
+
                 items.append({
-                    'symbol':     sym,
-                    'oi_chg_pct': round((float(latest_oi) - float(prev_oi)) / float(prev_oi) * 100, 2)
-                                  if float(prev_oi) > 0 else round(float(pchg), 2),
-                    'prev_oi':    int(prev_oi),
-                    'latest_oi':  int(latest_oi),
-                    'chg_oi':     int(chg_oi),
+                    'symbol':          sym,
+                    'oi_chg_pct':      oi_chg_pct,
+                    'prev_oi':         int(prev_oi),
+                    'latest_oi':       int(latest_oi),
+                    'chg_oi':          int(chg_oi),
+                    'oi_data_quality': data_quality,
+                    'low_liquidity':   (latest_oi_f < min_absolute_oi) or (prev_oi_f < min_absolute_oi),
                 })
             items.sort(key=lambda x: x['oi_chg_pct'], reverse=True)
             return items[:20]
     except:
         pass
-    return [{'symbol': s, 'oi_chg_pct': 0, 'prev_oi': 0, 'latest_oi': 0, 'chg_oi': 0}
+    return [{'symbol': s, 'oi_chg_pct': 0, 'prev_oi': 0, 'latest_oi': 0, 'chg_oi': 0,
+              'oi_data_quality': 'estimated', 'low_liquidity': True}
             for s in FALLBACK_WATCHLIST[:20]]
 
 def calculate_levels(cp, signal):
@@ -639,6 +669,24 @@ with st.expander("⚡ Dhan API — Real-Time Data (Optional)", expanded=False):
         else:
             st.caption("Blank = Yahoo Finance (default, delayed data) chalega jaisa pehle chal raha tha")
 
+# ─────────────────────────────────────────
+# OI LIQUIDITY FILTER (sidebar) — illiquid contracts ko flag karne ke liye
+# ─────────────────────────────────────────
+if 'min_absolute_oi' not in st.session_state:
+    st.session_state.min_absolute_oi = MIN_ABSOLUTE_OI_DEFAULT
+
+with st.sidebar:
+    st.markdown("### ⚙️ OI Filter Settings")
+    st.session_state.min_absolute_oi = st.slider(
+        "Minimum Absolute OI (Liquidity Filter)",
+        min_value=100, max_value=5000, step=100,
+        value=st.session_state.min_absolute_oi,
+        help="Isse kam absolute OI (contracts) wale stocks 'LOW LIQUIDITY ⚠️' "
+             "tag ke saath dikhenge — chahe unka OI% badha hua kyun na dikhe, "
+             "kyunki chhoti base OI par bada % noise ho sakta hai."
+    )
+    st.caption(f"Current threshold: **{st.session_state.min_absolute_oi:,} contracts**")
+
 tab1, tab2, tab3 = st.tabs(["  📡  LIVE SCANNER  ", "  📊  CHART VIEW  ", "  📓  TRADE JOURNAL  "])
 
 
@@ -663,21 +711,31 @@ with tab1:
 
     if scan_btn:
         with st.spinner("NSE se Top 20 OI Spurts fetch ho rahe hain..."):
-            oi_list = get_oi_gainers()
+            oi_list = get_oi_gainers(min_absolute_oi=st.session_state.min_absolute_oi)
 
         st.markdown(f'<div class="section-header">📋 Top {len(oi_list)} OI Spurt Stocks Scan Ho Rahe Hain</div>', unsafe_allow_html=True)
+
+        low_liq_count = sum(1 for x in oi_list if x.get('low_liquidity'))
+        if low_liq_count:
+            st.warning(f"⚠️ {low_liq_count}/{len(oi_list)} stocks LOW LIQUIDITY hain "
+                       f"(absolute OI < {st.session_state.min_absolute_oi:,} contracts) — "
+                       f"inka OI% bada dikh sakta hai, par size chhota liya jaye.")
 
         oi_preview = pd.DataFrame([{
             'RANK':       i+1,
             'SYMBOL':     x['symbol'],
-            'OI SPURT %': f"🟢 +{x['oi_chg_pct']:.2f}%" if x['oi_chg_pct'] >= 0 else f"🔴 {x['oi_chg_pct']:.2f}%",
+            'OI SPURT %': (f"🟢 +{x['oi_chg_pct']:.2f}%" if x['oi_chg_pct'] >= 0 else f"🔴 {x['oi_chg_pct']:.2f}%")
+                          + (" ~est" if x.get('oi_data_quality') == 'estimated' else ""),
             'PREV OI':    f"{x['prev_oi']:,}",
             'LATEST OI':  f"{x['latest_oi']:,}",
             'CHG OI':     f"{x['chg_oi']:+,}",
+            'LIQUIDITY':  "⚠️ LOW" if x.get('low_liquidity') else "✅ OK",
         } for i, x in enumerate(oi_list)])
 
         with st.expander("📊 NSE OI Spurt Raw Data (Top 20)", expanded=True):
             st.dataframe(oi_preview, use_container_width=True, hide_index=True)
+            st.caption("**~est** = prev-day OI 0/missing tha, isliye NSE ka pchg fallback use hua "
+                       "(real calculated % nahi). **⚠️ LOW** = absolute OI threshold se kam, illiquid contract.")
 
         results   = []
         skipped   = []
