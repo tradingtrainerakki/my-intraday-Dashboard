@@ -35,19 +35,6 @@ html, body, [class*="css"] {
     font-family: 'JetBrains Mono', monospace !important;
     background-color: #080c12 !important;
     color: #e4eefa !important;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.85), 0 0 1px rgba(255,255,255,0.12) !important;
-}
-/* Embossed / crisp look — har text element par thoda shadow taaki
-   chahe color kuch bhi ho, shabd saaf-saaf ubhre hue (embossed)
-   dikhein, background se mix na hon */
-p, span, div, td, th, li, label, .stMarkdown, .stMetric,
-[data-testid="stMetricValue"], [data-testid="stMetricLabel"],
-.stDataFrame, .stTable, button, .stButton button {
-    text-shadow: 0 1px 1.5px rgba(0,0,0,0.9), 0 0 1px rgba(255,255,255,0.08) !important;
-}
-[data-testid="stMetricValue"] {
-    font-weight: 800 !important;
-    letter-spacing: 0.5px !important;
 }
 .main { background-color: #080c12 !important; }
 section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
@@ -150,12 +137,24 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
 .stNumberInput > div > div > input,
 .stTextArea > div > div > textarea,
 .stSelectbox > div > div {
-    background-color: #0d1219 !important;
-    border: 1px solid #1e2d3d !important;
+    background-color: #131c28 !important;
+    border: 1px solid #2a4358 !important;
     border-radius: 8px !important;
-    color: #e4eefa !important;
+    color: #ffffff !important;
     font-family: 'JetBrains Mono', monospace !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder {
+    color: #7fa8cf !important;
+    opacity: 1 !important;
+}
+.stTextInput > div > div > input:focus,
+.stNumberInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+    border: 1px solid #00d4ff !important;
+    box-shadow: 0 0 0 1px #00d4ff40 !important;
 }
 .stDataFrame { border: 1px solid #1e2d3d !important; border-radius: 10px !important; overflow: hidden !important; }
 .stProgress > div > div > div { background: linear-gradient(90deg, #00d4ff, #00ff88) !important; border-radius: 4px !important; }
