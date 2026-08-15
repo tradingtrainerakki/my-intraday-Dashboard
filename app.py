@@ -34,7 +34,20 @@ st.markdown("""
 html, body, [class*="css"] {
     font-family: 'JetBrains Mono', monospace !important;
     background-color: #080c12 !important;
-    color: #c8d8e8 !important;
+    color: #e4eefa !important;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.85), 0 0 1px rgba(255,255,255,0.12) !important;
+}
+/* Embossed / crisp look — har text element par thoda shadow taaki
+   chahe color kuch bhi ho, shabd saaf-saaf ubhre hue (embossed)
+   dikhein, background se mix na hon */
+p, span, div, td, th, li, label, .stMarkdown, .stMetric,
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"],
+.stDataFrame, .stTable, button, .stButton button {
+    text-shadow: 0 1px 1.5px rgba(0,0,0,0.9), 0 0 1px rgba(255,255,255,0.08) !important;
+}
+[data-testid="stMetricValue"] {
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
 }
 .main { background-color: #080c12 !important; }
 section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
@@ -71,7 +84,7 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
 }
 .logo-sub {
     font-size: 10px;
-    color: #3a5a7a;
+    color: #7fa8cf;
     letter-spacing: 4px;
     text-transform: uppercase;
     margin-top: -4px;
@@ -86,7 +99,7 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
 [data-testid="stMetricLabel"] {
     font-size: 10px !important;
     letter-spacing: 2px !important;
-    color: #6a8aaa !important;
+    color: #9fc4e8 !important;
     text-transform: uppercase !important;
 }
 [data-testid="stMetricValue"] {
@@ -120,7 +133,7 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
 }
 .stTabs [data-baseweb="tab"] {
     background: transparent !important;
-    color: #6a8aaa !important;
+    color: #9fc4e8 !important;
     border-radius: 6px 6px 0 0 !important;
     padding: 10px 20px !important;
     font-size: 12px !important;
@@ -140,7 +153,7 @@ section[data-testid="stSidebar"] { background-color: #0d1219 !important; }
     background-color: #0d1219 !important;
     border: 1px solid #1e2d3d !important;
     border-radius: 8px !important;
-    color: #c8d8e8 !important;
+    color: #e4eefa !important;
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 12px !important;
 }
@@ -169,7 +182,7 @@ hr { border-color: #1e2d3d !important; }
     text-align: center;
 }
 label {
-    color: #6a8aaa !important;
+    color: #9fc4e8 !important;
     font-size: 11px !important;
     letter-spacing: 1px !important;
     text-transform: uppercase !important;
@@ -189,7 +202,7 @@ def check_password():
                         -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
                 📈 F&O PRO SCANNER
             </div>
-            <div style="color:#3a5a7a;font-size:10px;letter-spacing:3px;margin-bottom:24px;">NSE · INTRADAY · LIVE</div>
+            <div style="color:#7fa8cf;font-size:10px;letter-spacing:3px;margin-bottom:24px;">NSE · INTRADAY · LIVE</div>
         </div>
         """, unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -671,7 +684,7 @@ def plot_candles(df, ticker, interval_label):
         marker_color=colors, name='Volume', opacity=0.6), row=2, col=1)
     fig.update_layout(
         title=dict(text=f"<b>{ticker}</b> — {interval_label}",
-                   font=dict(size=16, color='#c8d8e8')),
+                   font=dict(size=16, color='#e4eefa')),
         template="plotly_dark", paper_bgcolor='#080c12', plot_bgcolor='#0d1219',
         xaxis_rangeslider_visible=False, height=580,
         legend=dict(orientation="h", yanchor="bottom", y=1.02,
@@ -785,8 +798,8 @@ st.markdown(f"""
                   font-size:12px;font-weight:700;letter-spacing:1px;">
         {'🟢' if open_status else '🔴'} {market_msg}
       </div>
-      <div style="color:#3a5a7a;font-size:11px;">⏰ {now_str}</div>
-      <div style="color:#6a8aaa;font-size:11px;">👤 {st.session_state.get('username','').upper()}</div>
+      <div style="color:#7fa8cf;font-size:11px;">⏰ {now_str}</div>
+      <div style="color:#9fc4e8;font-size:11px;">👤 {st.session_state.get('username','').upper()}</div>
     </div>
   </div>
 </div>
@@ -864,7 +877,7 @@ with tab1:
 
     with col_info:
         st.markdown("""
-        <div style="color:#6a8aaa;font-size:11px;padding:10px 0;letter-spacing:0.5px;">
+        <div style="color:#9fc4e8;font-size:11px;padding:10px 0;letter-spacing:0.5px;">
         📊 Top 20 stocks sorted by <b style="color:#00d4ff">OI Spurt %</b> at 9:20 AM &nbsp;|&nbsp;
         <span style="color:#ffc700;">⚡ Gap Filter ON: Opening gap &amp; First 5-min candle move &gt; 2% wale stocks exclude honge</span>
         </div>
@@ -906,7 +919,7 @@ with tab1:
         for i, oi_item in enumerate(oi_list):
             ticker = oi_item['symbol']
             status.markdown(
-                f'<div style="color:#6a8aaa;font-size:11px;letter-spacing:1px;">'
+                f'<div style="color:#9fc4e8;font-size:11px;letter-spacing:1px;">'
                 f'⏳ SCANNING: <span style="color:#00d4ff;font-weight:700;">{ticker}</span> '
                 f'| OI Spurt: <span style="color:#00ff88;font-weight:700;">+{oi_item["oi_chg_pct"]:.2f}%</span> '
                 f'({i+1}/{len(oi_list)})</div>',
@@ -928,7 +941,7 @@ with tab1:
                 f'<div style="background:#ffc70015;border:1px solid #ffc70040;border-radius:8px;'
                 f'padding:10px 16px;color:#ffc700;font-size:11px;margin-bottom:12px;">'
                 f'⚡ <b>Gap Filter:</b> {len(skipped)} stocks exclude kiye gaye (opening gap ya first 5-min candle &gt; 2%): '
-                f'<span style="color:#c8d8e8;">{", ".join(skipped)}</span></div>',
+                f'<span style="color:#e4eefa;">{", ".join(skipped)}</span></div>',
                 unsafe_allow_html=True
             )
 
@@ -972,14 +985,14 @@ with tab1:
                 .map(color_chg,       subset=['CHG %'])
                 .set_properties(**{
                     'background-color': '#0d1219',
-                    'color':            '#c8d8e8',
+                    'color':            '#e4eefa',
                     'border-color':     '#1e2d3d',
                     'font-size':        '12px',
                 })
                 .set_table_styles([
                     {'selector': 'thead th', 'props': [
                         ('background-color', '#111820'),
-                        ('color', '#6a8aaa'),
+                        ('color', '#9fc4e8'),
                         ('font-size', '10px'),
                         ('letter-spacing', '2px'),
                         ('text-transform', 'uppercase'),
@@ -1137,9 +1150,9 @@ with tab3:
             df_journal.style
             .map(color_pnl,    subset=['pnl'])
             .map(color_status, subset=['status'])
-            .set_properties(**{'background-color':'#0d1219','color':'#c8d8e8','border-color':'#1e2d3d','font-size':'12px'})
+            .set_properties(**{'background-color':'#0d1219','color':'#e4eefa','border-color':'#1e2d3d','font-size':'12px'})
             .set_table_styles([
-                {'selector':'thead th','props':[('background-color','#111820'),('color','#6a8aaa'),
+                {'selector':'thead th','props':[('background-color','#111820'),('color','#9fc4e8'),
                  ('font-size','10px'),('letter-spacing','2px'),('text-transform','uppercase'),
                  ('border-bottom','2px solid #1e2d3d'),('padding','10px 12px')]},
                 {'selector':'tbody td','props':[('padding','10px 12px'),('border-bottom','1px solid #1e2d3d')]},
@@ -1155,7 +1168,7 @@ with tab3:
     else:
         st.markdown("""
         <div style="background:#0d1219;border:1px solid #1e2d3d;border-radius:10px;
-                    padding:40px;text-align:center;color:#3a5a7a;">
+                    padding:40px;text-align:center;color:#7fa8cf;">
             <div style="font-size:2rem;margin-bottom:8px;">📓</div>
             <div style="font-size:12px;letter-spacing:2px;">Abhi koi entry nahi — upar se add karo!</div>
         </div>
