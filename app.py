@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import yfinance as yf
 import requests
+import time
 import json
 from datetime import datetime, timezone, timedelta
 
@@ -246,6 +247,84 @@ DHAN_SECURITY_IDS = {
     "BAJAJ-AUTO": "16669", "TATACONSUM": "3432",
 }
 
+def fetch_max_oi_strikes(ticker, client_id, access_token):
+    """
+    Dhan Option Chain API se underlying ke current expiry ka poora chain
+    fetch karke Max Call OI strike (resistance) aur Max Put OI strike
+    (support) nikalta hai.
+
+    Returns dict: {spot, expiry, max_ce_strike, max_ce_oi, max_pe_strike, max_pe_oi}
+    ya None on any failure (caller ko graceful skip karna chahiye).
+
+    NOTE: Dhan Option Chain API rate limit = 1 request per 3 seconds
+    (isliye multiple stocks ke liye caller ko beech mein sleep karna hoga).
+    """
+    try:
+        security_id = DHAN_SECURITY_IDS.get(ticker)
+        if not security_id or not client_id or not access_token:
+            return None
+
+        headers = {
+            "Content-Type": "application/json",
+            "access-token": access_token,
+            "client-id": client_id,
+        }
+
+        # Step 1: nearest expiry le lo underlying ke liye
+        exp_resp = requests.post(
+            "https://api.dhan.co/v2/optionchain/expirylist",
+            json={"UnderlyingScrip": int(security_id), "UnderlyingSeg": "NSE_FNO"},
+            headers=headers, timeout=10
+        )
+        if exp_resp.status_code != 200:
+            return None
+        exp_data = exp_resp.json()
+        expiry_list = exp_data.get('data', [])
+        if not expiry_list:
+            return None
+        nearest_expiry = expiry_list[0]
+
+        # Step 2: uss expiry ki poori option chain fetch karo
+        chain_resp = requests.post(
+            "https://api.dhan.co/v2/optionchain",
+            json={"UnderlyingScrip": int(security_id), "UnderlyingSeg": "NSE_FNO",
+                  "Expiry": nearest_expiry},
+            headers=headers, timeout=10
+        )
+        if chain_resp.status_code != 200:
+            return None
+        chain_data = chain_resp.json().get('data', {})
+        oc = chain_data.get('oc', {})
+        spot = chain_data.get('last_price', 0)
+        if not oc:
+            return None
+
+        max_ce_strike, max_ce_oi = None, -1
+        max_pe_strike, max_pe_oi = None, -1
+        for strike_str, legs in oc.items():
+            try:
+                strike = float(strike_str)
+            except (ValueError, TypeError):
+                continue
+            ce_oi = (legs.get('ce', {}) or {}).get('oi', 0) or 0
+            pe_oi = (legs.get('pe', {}) or {}).get('oi', 0) or 0
+            if ce_oi > max_ce_oi:
+                max_ce_oi, max_ce_strike = ce_oi, strike
+            if pe_oi > max_pe_oi:
+                max_pe_oi, max_pe_strike = pe_oi, strike
+
+        if max_ce_strike is None or max_pe_strike is None:
+            return None
+
+        return {
+            'spot': spot, 'expiry': nearest_expiry,
+            'max_ce_strike': max_ce_strike, 'max_ce_oi': int(max_ce_oi),
+            'max_pe_strike': max_pe_strike, 'max_pe_oi': int(max_pe_oi),
+        }
+    except Exception:
+        return None
+
+
 def fetch_dhan_5m_df(ticker, access_token):
     """
     Try to fetch 5m intraday data from Dhan for `ticker`.
@@ -383,6 +462,61 @@ def calculate_levels(cp, signal):
     elif "SELL" in signal:
         return round(cp * 1.005, 2), round(cp * 0.99, 2)
     return "-", "-"
+
+def render_max_oi_section(df_result):
+    """
+    Top-5 scanned stocks (OI Spurt % ke hisaab se sorted, jo pehle se
+    df_result mein hai) ke liye Dhan Option Chain se Max CALL OI strike
+    (resistance) aur Max PUT OI strike (support) dikhata hai.
+
+    Sirf tab kaam karta hai jab Dhan token + client ID dono set hon —
+    warna friendly message dikhata hai.
+    """
+    st.markdown('<div class="section-header">🎯 Max OI Strike — Top 5 Stocks (Support/Resistance)</div>', unsafe_allow_html=True)
+
+    token     = st.session_state.get('dhan_token', '')
+    client_id = st.session_state.get('dhan_client_id', '')
+
+    if not token or not client_id:
+        st.info("💡 Ye feature ke liye 'Dhan API' box mein Access Token **aur** Client ID dono bharo (upar). "
+                "Isse har stock ka Call/Put max OI strike (support/resistance) mil jaayega.")
+        return
+
+    if st.button("🎯 Top 5 Stocks ka Max OI Strike Nikalo", key="max_oi_btn"):
+        top5 = df_result.head(5)
+        rows = []
+        prog = st.progress(0)
+        stat = st.empty()
+        for i, (_, r) in enumerate(top5.iterrows()):
+            ticker = r['STOCK']
+            stat.markdown(f"⏳ Fetching: **{ticker}** ({i+1}/{len(top5)}) — Dhan rate limit ki wajah se 3 sec/stock lagega")
+            info = fetch_max_oi_strikes(ticker, client_id, token)
+            if info:
+                rows.append({
+                    'STOCK':          ticker,
+                    'SPOT/LTP':       f"{info['spot']:.2f}" if info['spot'] else r.get('LTP', '-'),
+                    'EXPIRY':         info['expiry'],
+                    'RESISTANCE (Max CE OI)': f"{info['max_ce_strike']:.0f}  ({info['max_ce_oi']:,} OI)",
+                    'SUPPORT (Max PE OI)':    f"{info['max_pe_strike']:.0f}  ({info['max_pe_oi']:,} OI)",
+                })
+            else:
+                rows.append({
+                    'STOCK': ticker, 'SPOT/LTP': '-', 'EXPIRY': '-',
+                    'RESISTANCE (Max CE OI)': '⚠️ Data nahi mila',
+                    'SUPPORT (Max PE OI)':    '⚠️ Data nahi mila',
+                })
+            prog.progress((i + 1) / len(top5))
+            if i < len(top5) - 1:
+                time.sleep(3)  # Dhan Option Chain rate limit: 1 request per 3 sec
+        stat.empty()
+        prog.empty()
+
+        if rows:
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            st.caption("**RESISTANCE** = jis strike par sabse zyada CALL OI bana hua hai (upar jaane mein rukavat maani jaati hai). "
+                       "**SUPPORT** = jis strike par sabse zyada PUT OI bana hua hai (neeche girne se rokne wala level). "
+                       "Chart par ye price levels mark karke analysis karo, taaki confusion na ho.")
+
 
 def get_pro_data(ticker, oi_info):
     try:
@@ -669,6 +803,8 @@ with th_col:
 # ─────────────────────────────────────────
 if 'dhan_token' not in st.session_state:
     st.session_state.dhan_token = ''
+if 'dhan_client_id' not in st.session_state:
+    st.session_state.dhan_client_id = ''
 
 with st.expander("⚡ Dhan API — Real-Time Data (Optional)", expanded=False):
     dcol1, dcol2 = st.columns([3, 1])
@@ -681,6 +817,13 @@ with st.expander("⚡ Dhan API — Real-Time Data (Optional)", expanded=False):
             label_visibility="collapsed",
         )
         st.session_state.dhan_token = pasted_token
+        pasted_client_id = st.text_input(
+            "Dhan Client ID",
+            value=st.session_state.dhan_client_id,
+            placeholder="Dhan Client ID (Max OI Strike feature ke liye zaroori)",
+            label_visibility="collapsed",
+        )
+        st.session_state.dhan_client_id = pasted_client_id
     with dcol2:
         if st.session_state.dhan_token:
             st.success("✅ Token set")
@@ -862,6 +1005,8 @@ with tab1:
                 file_name=f"oi_scan_{now_ist().strftime('%d%m%Y_%H%M')}.csv",
                 mime='text/csv',
             )
+
+            render_max_oi_section(df_result)
         else:
             st.warning("⚠️ Koi stock nahi mila — market band hai ya data nahi mila")
 
@@ -879,6 +1024,7 @@ with tab1:
         )
         st.dataframe(styled, use_container_width=True, height=520)
 
+        render_max_oi_section(df_result)
 
 # ─────────────────────────────────────────
 # TAB 2 — CHART
