@@ -259,6 +259,36 @@ DHAN_SECURITY_IDS = {
     "BAJAJ-AUTO": "16669", "TATACONSUM": "3432",
 }
 
+@st.cache_data(ttl=6*3600, show_spinner=False)
+def load_dhan_scrip_master():
+    """
+    Dhan ka poora NSE equity scrip master CSV ek baar download karke
+    symbol -> security_id ka dynamic mapping banata hai (6 ghante cache
+    hota hai) — taaki koi bhi F&O stock, chahe DHAN_SECURITY_IDS wale
+    hardcoded 50-stock dict mein na ho, automatically resolve ho jaaye.
+    Scan roz alag-alag top-20 OI spurt stocks deta hai, isliye ye zaroori hai.
+    """
+    try:
+        url = "https://images.dhan.co/api-data/api-scrip-master.csv"
+        df = pd.read_csv(url, low_memory=False)
+
+        exch_col = 'SEM_EXM_EXCH_ID' if 'SEM_EXM_EXCH_ID' in df.columns else 'EXCH_ID'
+        seg_col  = 'SEM_SEGMENT'     if 'SEM_SEGMENT'     in df.columns else 'SEGMENT'
+        sym_col  = 'SEM_TRADING_SYMBOL' if 'SEM_TRADING_SYMBOL' in df.columns else 'SYMBOL_NAME'
+        id_col   = 'SEM_SMST_SECURITY_ID' if 'SEM_SMST_SECURITY_ID' in df.columns else 'SECURITY_ID'
+
+        eq = df[(df[exch_col].astype(str).str.upper() == 'NSE') &
+                (df[seg_col].astype(str).str.upper() == 'E')]
+
+        mapping = dict(zip(
+            eq[sym_col].astype(str).str.upper().str.strip(),
+            eq[id_col].astype(str).str.strip()
+        ))
+        return mapping
+    except Exception:
+        return {}
+
+
 def fetch_max_oi_strikes(ticker, client_id, access_token):
     """
     Dhan Option Chain API se underlying ke current expiry ka poora chain
@@ -272,8 +302,16 @@ def fetch_max_oi_strikes(ticker, client_id, access_token):
     (isliye multiple stocks ke liye caller ko beech mein sleep karna hoga).
     """
     try:
+        # Pehle hardcoded fast-path dict try karo, warna dynamic scrip
+        # master se dhundo (ye kisi bhi NSE stock ko resolve kar sakta hai)
         security_id = DHAN_SECURITY_IDS.get(ticker)
-        if not security_id or not client_id or not access_token:
+        if not security_id:
+            security_id = load_dhan_scrip_master().get(ticker.upper())
+        if not security_id:
+            st.session_state.setdefault('max_oi_errors', {})[ticker] = "Security ID nahi mila (scrip master mein bhi nahi)"
+            return None
+        if not client_id or not access_token:
+            st.session_state.setdefault('max_oi_errors', {})[ticker] = "Client ID / Token missing"
             return None
 
         headers = {
@@ -289,10 +327,12 @@ def fetch_max_oi_strikes(ticker, client_id, access_token):
             headers=headers, timeout=10
         )
         if exp_resp.status_code != 200:
+            st.session_state.setdefault('max_oi_errors', {})[ticker] = f"Expiry list fetch fail (HTTP {exp_resp.status_code}): {exp_resp.text[:150]}"
             return None
         exp_data = exp_resp.json()
         expiry_list = exp_data.get('data', [])
         if not expiry_list:
+            st.session_state.setdefault('max_oi_errors', {})[ticker] = "Expiry list khaali aaya"
             return None
         nearest_expiry = expiry_list[0]
 
@@ -304,11 +344,13 @@ def fetch_max_oi_strikes(ticker, client_id, access_token):
             headers=headers, timeout=10
         )
         if chain_resp.status_code != 200:
+            st.session_state.setdefault('max_oi_errors', {})[ticker] = f"Option chain fetch fail (HTTP {chain_resp.status_code}): {chain_resp.text[:150]}"
             return None
         chain_data = chain_resp.json().get('data', {})
         oc = chain_data.get('oc', {})
         spot = chain_data.get('last_price', 0)
         if not oc:
+            st.session_state.setdefault('max_oi_errors', {})[ticker] = "Option chain data khaali aaya"
             return None
 
         max_ce_strike, max_ce_oi = None, -1
@@ -333,7 +375,8 @@ def fetch_max_oi_strikes(ticker, client_id, access_token):
             'max_ce_strike': max_ce_strike, 'max_ce_oi': int(max_ce_oi),
             'max_pe_strike': max_pe_strike, 'max_pe_oi': int(max_pe_oi),
         }
-    except Exception:
+    except Exception as e:
+        st.session_state.setdefault('max_oi_errors', {})[ticker] = f"Exception: {str(e)[:150]}"
         return None
 
 
@@ -495,6 +538,7 @@ def render_max_oi_section(df_result):
         return
 
     if st.button("🎯 Top 5 Stocks ka Max OI Strike Nikalo", key="max_oi_btn"):
+        st.session_state['max_oi_errors'] = {}  # purani errors clear karo
         top5 = df_result.head(5)
         rows = []
         prog = st.progress(0)
@@ -528,6 +572,12 @@ def render_max_oi_section(df_result):
             st.caption("**RESISTANCE** = jis strike par sabse zyada CALL OI bana hua hai (upar jaane mein rukavat maani jaati hai). "
                        "**SUPPORT** = jis strike par sabse zyada PUT OI bana hua hai (neeche girne se rokne wala level). "
                        "Chart par ye price levels mark karke analysis karo, taaki confusion na ho.")
+
+        errors = st.session_state.get('max_oi_errors', {})
+        if errors:
+            with st.expander("⚠️ Kis stock mein kya error aayi (debug ke liye)", expanded=True):
+                for tkr, msg in errors.items():
+                    st.markdown(f"- **{tkr}**: {msg}")
 
 
 def get_pro_data(ticker, oi_info):
